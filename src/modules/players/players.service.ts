@@ -12,11 +12,11 @@ export class PlayersService {
 
 	constructor(@InjectRepository(PlayerEntity) private playersRepository: Repository<PlayerEntity>) { }
 
-	public async create(playerDto: CreatePlayerBodyDto): Promise<PlayerEntity> {
+	public async create(createPlayerDto: CreatePlayerBodyDto): Promise<PlayerEntity> {
 		/* remove possible duplicities */
-		playerDto.roles = playerDto.roles ? [...new Set(playerDto.roles)] : playerDto.roles;
+		createPlayerDto.roles = createPlayerDto.roles ? [...new Set(createPlayerDto.roles)] : createPlayerDto.roles;
 
-		const player = await this.playersRepository.save(playerDto);
+		const player = await this.playersRepository.save(createPlayerDto);
 
 		this.logger.debug("CREATED_PLAYER", { player });
 

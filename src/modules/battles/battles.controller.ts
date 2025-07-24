@@ -19,7 +19,7 @@ export class BattlesController {
 
 	@Post()
 	@Roles(PlayerRole.Player)
-	public submit(@Body() body: SubmitBattleBodyDto): void {
-		this.battlesService.submit(body);
+	public async submit(@Body() body: SubmitBattleBodyDto): Promise<void> {
+		await this.battlesService.submit(body);
 	}
 }

@@ -2,8 +2,8 @@ import { IsUUID } from "class-validator";
 
 export class SubmitBattleBodyDto {
 	@IsUUID("all")
-	attackerId: string;
+	challengerId: string;
 
 	@IsUUID("all")
-	defenderId: string;
+	opponentId: string;
 }
