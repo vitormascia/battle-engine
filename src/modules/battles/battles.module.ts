@@ -6,14 +6,16 @@ import {
 	ONE_DAY_IN_SECONDS,
 	ONE_SECOND_IN_MILLISECONDS,
 } from "../../constants/time.constants.js";
+import { QueueName } from "../app/queues.enum.js";
 import { PlayersModule } from "../players/players.module.js";
 import { BattlesController } from "./battles.controller.js";
 import { BattleEntity } from "./battles.entity.js";
+import { BattlesConsumer } from "./battles.processor.js";
 import { BattlesService } from "./battles.service.js";
 import { TurnEntity } from "./turns.entity.js";
 
 const BattlesQueueDynamicModule = BullModule.registerQueue({
-	name: "Battles",
+	name: QueueName.Battles,
 	defaultJobOptions: {
 		attempts: 3,
 		backoff: {
@@ -41,7 +43,10 @@ const BattlesQueueDynamicModule = BullModule.registerQueue({
 		PlayersModule,
 	],
 	controllers: [BattlesController],
-	providers: [BattlesService],
+	providers: [
+		BattlesService,
+		BattlesConsumer,
+	],
 	exports: [
 		TypeOrmModule,
 		BattlesQueueDynamicModule,

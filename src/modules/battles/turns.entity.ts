@@ -12,7 +12,8 @@ import {
 import { AbstractEntity } from "../app/base.entity.js";
 /* Avoid circular dependency error */
 import type { BattleEntity } from "./battles.entity.js";
-import { Turn } from "./battles.interface.js";
+import { TurnLog } from "./battles.interface.js";
+import { Turn } from "./battles.type.js";
 
 @Entity("turns")
 @Unique(["index", "battleId"])
@@ -46,4 +47,10 @@ export class TurnEntity extends AbstractEntity implements Turn {
 		nullable: false,
 	})
 	battleId: string;
+
+	@Column({
+		type: "jsonb",
+		nullable: false,
+	})
+	turnLog: TurnLog;
 }

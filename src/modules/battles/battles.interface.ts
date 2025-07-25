@@ -1,21 +1,16 @@
-import { Player } from "../players/players.interface.js";
+import { Player } from "../players/players.type.js";
 
-export interface Battle {
-	id: string;
-	winner: Player | null;
-	winnerId: string | null;
-	loser: Player | null;
-	loserId: string | null;
-	turns: Array<Turn>;
-	createdAt: Date;
-	updatedAt: Date;
+export interface TurnLog {
+	lorem: string
 }
 
-export interface Turn {
-	id: string;
-	index: number;
-	battle: Battle;
-	battleId: string;
-	createdAt: Date;
-	updatedAt: Date;
+export interface BattleJobData {
+	traceId: string;
+	challengerId: string;
+	opponentId: string;
+}
+
+export interface BattleResult {
+	winner: Player;
+	loser: Player;
 }

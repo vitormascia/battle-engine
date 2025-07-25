@@ -11,7 +11,7 @@ import {
 import { PlayerRole } from "../../guards/roles.enum.js";
 import { AbstractEntity } from "../app/base.entity.js";
 import { BattleEntity } from "../battles/battles.entity.js";
-import { Player } from "./players.interface.js";
+import { Player } from "./players.type.js";
 
 @Entity("players")
 @Unique(["name"])
@@ -77,6 +77,12 @@ export class PlayerEntity extends AbstractEntity implements Player {
 		default: [PlayerRole.Player],
 	})
 	roles: Array<PlayerRole>;
+
+	@OneToMany(() => BattleEntity, (battle) => battle.challenger)
+	battlesAsChallenger: Relation<Array<BattleEntity>>;
+
+	@OneToMany(() => BattleEntity, (battle) => battle.opponent)
+	battlesAsOpponent: Relation<Array<BattleEntity>>;
 
 	@OneToMany(() => BattleEntity, (battle) => battle.winner)
 	wonBattles: Relation<Array<BattleEntity>>;
