@@ -10,7 +10,7 @@ This repository contains the implementation of the **Backend Development Hands-O
 
 ## 🎛️ Running the app
 
-1. Set up your `.env`
+`1.` Set up your `.env`
 
 ```env
 #-------------
@@ -52,42 +52,42 @@ THROTTLER_TTL="60"
 IN_GAME_DIFFICULTY="NORMAL"
 ```
 
-2. Set the correct Node.js version via the `.nvmrc` file
+`2.` Set the correct Node.js version via the `.nvmrc` file
 
 ```
 nvm use
 ```
 
-3. Build the app
+`3.` Build the app
 
 ```
 npm run build
 ```
 
-4. Rise the containers
+`4.` Rise the containers
 
 ```
 docker compose up -d
 ```
 
-5. Optionally, if you wanna bring the containers down 
+`5.` Optionally, if you wanna bring the containers down 
 ```
 docker compose down -v
 ```
 
-6. Run the app on watch mode (don’t worry, migrations auto run on every application launch)
+`6.` Run the app on watch mode (don’t worry, migrations auto run on every application launch)
 ```
 npm run start:dev
 ```
 
-7. You can check the app health
+`7.` You can check the app health
 ```cURL
 curl --request GET \
   --url http://localhost:3000/health \
   --header 'User-Agent: insomnia/11.3.0'
 ```
 
-8. You can create Players as a Game Master. The `User-Id` has to be the a Game Master ID. A migration already created that Game Master called `Scopely` for you! Retrieve it and set `gameMasterUUID`
+`8.` You can create Players as a Game Master. The `User-Id` has to be the a Game Master ID. A migration already created that Game Master called `Scopely` for you! Retrieve it and set `gameMasterUUID`
 
 ```SQL
 SELECT *
@@ -114,7 +114,7 @@ curl --request POST \
 }'
 ```
 
-9. You can submit Battles as a Player. The `User-Id` has to be the **CHALLENGER** Player ID
+`9.` You can submit Battles as a Player. The `User-Id` has to be the **CHALLENGER** Player ID
 
 Requires role `PlayerRole.Player`
 
@@ -129,7 +129,7 @@ curl --request POST \
 }'
 ```
 
-10. Once a battle concludes, you can retrieve a full snapshot of its state by querying the relevant tables
+`10.` Once a battle concludes, you can retrieve a full snapshot of its state by querying the relevant tables
 
 ```SQL
 SELECT *
@@ -198,13 +198,13 @@ Since the app doesn’t feature a traditional **sign-up/sign-in system**, I intr
 
 The system uses two enums to define roles:
 
-* `PlayerRole`: `Player`, `PremiumPlayer`, `ClanLeader`
-* `GameMasterRole`: `Moderator`, `EventManager`, `SupportAgent`
+- `PlayerRole`: `Player`, `PremiumPlayer`, `ClanLeader`
+- `GameMasterRole`: `Moderator`, `EventManager`, `SupportAgent`
 
 For this implementation:
 
-* `GameMasterRole.Moderator` — Can create players.
-* `PlayerRole.Player` — Can initiate battles.
+- `GameMasterRole.Moderator` — Can create players.
+- `PlayerRole.Player` — Can initiate battles.
 
 This setup allows for future expansion, where premium players or clan leaders might have special privileges. Role enforcement is handled through custom decorators and guards, ensuring only users with valid roles can access protected routes.
 
