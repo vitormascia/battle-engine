@@ -1,5 +1,3 @@
-// import "dotenv/config";
-
 import {
 	DEFAULT_APP_PORT,
 	DEFAULT_BATTLE_LOCK_TTL,
