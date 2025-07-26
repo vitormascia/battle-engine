@@ -14,7 +14,7 @@ export class CreateGameMaster1753495313666 implements MigrationInterface {
 			)
 			VALUES (
 				uuid_generate_v4(),
-				'StarkFuture',
+				'Scopely',
 				'{Moderator}'::game_masters_roles_enum[],
 				now(),
 				now()
@@ -25,7 +25,7 @@ export class CreateGameMaster1753495313666 implements MigrationInterface {
 	public async down(queryRunner: QueryRunner): Promise<void> {
 		await queryRunner.query(`
 			DELETE FROM public.game_masters
-			WHERE name = 'StarkFuture';
+			WHERE name = 'Scopely';
 		`);
 	}
 }

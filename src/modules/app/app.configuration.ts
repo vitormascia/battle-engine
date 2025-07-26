@@ -2,6 +2,7 @@ import {
 	DEFAULT_APP_PORT,
 	DEFAULT_BATTLE_LOCK_TTL,
 	DEFAULT_CORS_ORIGIN,
+	DEFAULT_IN_GAME_DIFFICULTY,
 	DEFAULT_POSTGRES_PORT,
 	DEFAULT_REDIS_PORT,
 	DEFAULT_THROTTLER_LIMIT,
@@ -40,6 +41,9 @@ const configuration = (): Record<string, any> => {
 					battleLock: parseInt(setConfig(process.env.BATTLE_LOCK_TTL, DEFAULT_BATTLE_LOCK_TTL)),
 				},
 			},
+		},
+		inGame: {
+			difficulty: setConfig(process.env.IN_GAME_DIFFICULTY, DEFAULT_IN_GAME_DIFFICULTY),
 		},
 	};
 };

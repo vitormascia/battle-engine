@@ -82,6 +82,9 @@ async function bootstrap(): Promise<void> {
 			battleLocks: configService.get<number>("databases.redis.ttls.battleLock"),
 		},
 	};
+	const inGame = {
+		difficulty: configService.get<string>("inGame.difficulty"),
+	};
 
 	const logger = new Logger();
 
@@ -94,11 +97,14 @@ async function bootstrap(): Promise<void> {
 				postgres: postgresConfig,
 				redis: redisConfig,
 			},
+			inGame,
 		});
 	} catch (error: any) {
 		logger.error("BOOTSTRAP_APP_ERROR", {
 			appConfig,
 			postgresConfig,
+			redisConfig,
+			inGame,
 			error: {
 				message: error.message,
 				stack: error.stack,

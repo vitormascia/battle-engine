@@ -26,8 +26,6 @@ import { HealthModule } from "../health_check/health_check.module.js";
 import { PlayersModule } from "../players/players.module.js";
 import { RedisModule } from "../redis/redis.module.js";
 import configuration from "./app.configuration.js";
-import { AppController } from "./app.controller.js";
-import { AppService } from "./app.service.js";
 
 @Module({
 	imports: [
@@ -95,7 +93,7 @@ import { AppService } from "./app.service.js";
 		HealthModule,
 		RedisModule,
 	],
-	controllers: [AppController],
+	controllers: [],
 	providers: [
 		{
 			provide: APP_INTERCEPTOR,
@@ -105,7 +103,6 @@ import { AppService } from "./app.service.js";
 			provide: APP_GUARD,
 			useClass: ThrottlerGuard,
 		},
-		AppService,
 	],
 	exports: [],
 })

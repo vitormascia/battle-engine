@@ -9,3 +9,4 @@ export const DEFAULT_CORS_ORIGIN = `http://localhost:${DEFAULT_APP_PORT}`;
 export const DEFAULT_THROTTLER_LIMIT = "100";
 export const DEFAULT_THROTTLER_TTL = String(ONE_MINUTE_IN_SECONDS);
 export const DEFAULT_BATTLE_LOCK_TTL = String(new BigNumber(ONE_MINUTE_IN_SECONDS).times(5));
+export const DEFAULT_IN_GAME_DIFFICULTY = "NORMAL";

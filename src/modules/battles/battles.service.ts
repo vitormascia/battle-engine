@@ -7,6 +7,7 @@ import {
 	NotFoundException,
 	UnprocessableEntityException,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import BigNumber from "bignumber.js";
 import { Queue } from "bullmq";
@@ -35,6 +36,7 @@ import {
 	Battle,
 	CreateBattle,
 	CreateTurn,
+	InGameDifficulty,
 	PlayerInBattle,
 	Turn,
 	UpdateBattle,
@@ -45,6 +47,7 @@ import { TurnEntity } from "./turns.entity.js";
 @Injectable()
 export class BattlesService {
 	private readonly logger = new Logger(this.constructor.name);
+	private readonly inGameDifficulty: InGameDifficulty;
 
 	constructor(
 		@InjectRepository(PlayerEntity)
@@ -55,9 +58,11 @@ export class BattlesService {
 		private readonly turnsRepository: Repository<TurnEntity>,
 		@InjectQueue(QueueName.Battles)
 		private readonly battlesQueue: Queue<BattleJobData>,
+		private readonly configService: ConfigService,
 		private readonly battleLocksService: BattleLocksService,
 		private readonly playersService: PlayersService,
 	) {
+		this.inGameDifficulty = this.configService.get<InGameDifficulty>("inGame.difficulty")!;
 	}
 
 	public async create(createBattle: CreateBattle): Promise<Battle> {
@@ -272,12 +277,39 @@ export class BattlesService {
 		turnSnapshot.newDefenderAttack = newDefenderAttack;
 	}
 
+	private getHitChanceExponentBasedOnInGameDifficulty(inGameDifficulty: InGameDifficulty): number {
+		switch (inGameDifficulty) {
+			case "VERY_EASY":
+				return 0.5;
+
+			case "EASY":
+				return 0.8;
+
+			case "NORMAL":
+				return 1;
+
+			case "MEDIUM":
+				return 1.1;
+
+			case "HARD":
+				return 1.3;
+
+			case "VERY_HARD":
+				return 1.5;
+
+			default:
+				return 1;
+		}
+	}
+
 	/*
 		Scaled Probability Formula
 
-		Use a sigmoid-style curve to calculate hit chance:
-			• hitChance = attack / (attack + defense)
-		Properties:
+		Use a sigmoid-style curve to calculate hit chance (with hit chance exponent based on in-game
+		difficulty):
+			• hitChance =
+				attack^hitChanceExponent / (attack^hitChanceExponent + defense^hitChanceExponent)
+		Properties (Considering In-Game Difficulty NORMAL):
 			• Attack = Defense => Hit Chance 50%
 			• As Defense > Attack => Hit Chance goes closer to 0%
 			• As Defense < Attack => Hit Chance goes closer to 100%
@@ -288,8 +320,13 @@ export class BattlesService {
 			defender,
 		});
 
-		const hitChance = new BigNumber(attacker.attack)
-			.dividedBy(new BigNumber(attacker.attack).plus(defender.defense));
+		const hitChanceExponent = this.getHitChanceExponentBasedOnInGameDifficulty(this.inGameDifficulty);
+
+		const attackerAttack = new BigNumber(attacker.attack);
+		const defenderDefense = new BigNumber(defender.defense);
+
+		const hitChance = attackerAttack.pow(hitChanceExponent)
+			.dividedBy(attackerAttack.pow(hitChanceExponent).plus(defenderDefense.pow(hitChanceExponent)));
 
 		const hitChancePercentage = hitChance.times(100).toNumber();
 
