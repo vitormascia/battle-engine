@@ -194,10 +194,19 @@ The spec suggested using **Redis** for everything. However, using an **in-memory
 
 ### 🔐 Role-Based Access Control (RBAC)
 
-Since the app doesn’t feature a traditional **sign-up/sign-in system**, I introduced a **Basic RBAC layer**. This ensures endpoint access is controlled based on roles:
+Since the app doesn’t feature a traditional **sign-up/sign-in system**, I introduced a **Basic RBAC layer** to control access based on roles. This ensures endpoints are protected while keeping the logic lightweight and spec-compliant.
+
+The system uses two enums to define roles:
+
+* `PlayerRole`: `Player`, `PremiumPlayer`, `ClanLeader`
+* `GameMasterRole`: `Moderator`, `EventManager`, `SupportAgent`
+
+For this implementation:
 
 * `GameMasterRole.Moderator` — Can create players.
 * `PlayerRole.Player` — Can initiate battles.
+
+This setup allows for future expansion, where premium players or clan leaders might have special privileges. Role enforcement is handled through custom decorators and guards, ensuring only users with valid roles can access protected routes.
 
 This adds a lightweight but effective **authorization layer**, keeping the app secure while staying spec-compliant.
 
