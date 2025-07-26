@@ -10,9 +10,8 @@ import {
 } from "typeorm";
 
 import { AbstractEntity } from "../app/base.entity.js";
-/* Avoid circular dependency error */
-import type { BattleEntity } from "./battles.entity.js";
-import { TurnLog } from "./battles.interface.js";
+import { BattleEntity } from "./battles.entity.js";
+import { TurnSnapshot } from "./battles.interface.js";
 import { Turn } from "./battles.type.js";
 
 @Entity("turns")
@@ -31,8 +30,7 @@ export class TurnEntity extends AbstractEntity implements Turn {
 	index: number;
 
 	@ManyToOne(
-		/* Avoid circular dependency error */
-		"BattleEntity",
+		() => BattleEntity,
 		(battle: BattleEntity) => battle.turns,
 		{
 			onDelete: "CASCADE",
@@ -52,5 +50,5 @@ export class TurnEntity extends AbstractEntity implements Turn {
 		type: "jsonb",
 		nullable: false,
 	})
-	turnLog: TurnLog;
+	turnSnapshot: TurnSnapshot;
 }

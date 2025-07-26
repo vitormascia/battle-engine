@@ -45,7 +45,7 @@ export class GameMasterRolesGuard implements CanActivate {
 		const gameMasterId = req.headers["user-id"];
 
 		if (typeof gameMasterId !== "string") {
-			throw new UnauthorizedException("User-Id Header has to be a String");
+			throw new UnauthorizedException("User-Id Header has to be set");
 		}
 
 		if (!isUUID(gameMasterId)) {
@@ -88,7 +88,7 @@ export class GameMasterRolesGuard implements CanActivate {
 			context.getClass(),
 		]);
 
-		const gameMasterHasRequiredRoles = requiredRoles.every((role) => gameMaster.roles.includes(role));
+		const gameMasterHasRequiredRoles = requiredRoles.some((role) => gameMaster.roles.includes(role));
 
 		this.logger.debug("ROLES_GUARD_RESULT", {
 			request: {

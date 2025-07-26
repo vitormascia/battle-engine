@@ -19,7 +19,7 @@ export class PlayerInterceptor implements NestInterceptor {
 	public intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
 		const req = context.switchToHttp().getRequest<InterceptorRequest>();
 
-		this.logger.debug("FETCHING_USER_DATA_FROM_HEADERS", {
+		this.logger.debug("INCOMMING_REQUEST", {
 			request: {
 				user: req.user,
 				method: req.method,

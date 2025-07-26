@@ -27,7 +27,10 @@ async function bootstrap(): Promise<void> {
 		{ rawBody: true },
 	);
 
-	app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+	app.useGlobalPipes(new ValidationPipe({
+		whitelist: true,
+		transform: true,
+	}));
 	app.useGlobalPipes(new TrimPipe());
 
 	const configService = app.get(ConfigService);
@@ -47,6 +50,10 @@ async function bootstrap(): Promise<void> {
 		port: configService.get<number>("app.port")!,
 		environment: configService.get<string>("app.environment")!,
 		corsOrigin,
+		throtller: {
+			limit: configService.get<number>("app.throttler.limit"),
+			ttl: configService.get<number>("app.throttler.ttl"),
+		},
 	};
 	const postgresConfig = {
 		host: configService.get<string>("databases.postgres.host"),
@@ -86,14 +93,27 @@ async function bootstrap(): Promise<void> {
 	}
 
 	const gracefulShutdown = async (): Promise<void> => {
-		logger.debug("SHUTTING_DOWN_SERVER");
+		try {
+			logger.debug("SHUTTING_DOWN_SERVER");
 
-		await app.close();
+			await app.close();
 
-		process.exit(0);
+			process.exit(0);
+		} catch (error: any) {
+			logger.error("SHUTTING_DOWN_SERVER_ERROR", {
+				error: {
+					message: error.message,
+					stack: error.stack,
+				},
+			});
+
+			process.exit(1);
+		}
 	};
 
+	/* Listen for termination signal (e.g., `kill` command) */
 	process.on("SIGTERM", gracefulShutdown);
+	/* Listen for interrupt signal (e.g., Ctrl+C in terminal) */
 	process.on("SIGINT", gracefulShutdown);
 }
 

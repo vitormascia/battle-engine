@@ -8,7 +8,12 @@ import {
 	ConfigModule,
 	ConfigService,
 } from "@nestjs/config";
-import { APP_INTERCEPTOR } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import {
+	seconds,
+	ThrottlerGuard,
+	ThrottlerModule,
+} from "@nestjs/throttler";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import path from "path";
 
@@ -31,6 +36,18 @@ import { AppService } from "./app.service.js";
 				path.join(process.cwd(), ".env"),
 			],
 			isGlobal: true,
+		}),
+		ThrottlerModule.forRootAsync({
+			imports: [ConfigModule],
+			inject: [ConfigService],
+			useFactory: (config: ConfigService) => ({
+				throttlers: [
+					{
+						limit: config.get<number>("app.throttler.limit")!,
+						ttl: seconds(config.get<number>("app.throttler.ttl")!),
+					},
+				],
+			}),
 		}),
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],
@@ -78,10 +95,13 @@ import { AppService } from "./app.service.js";
 	],
 	controllers: [AppController],
 	providers: [
-		/* TODO Stop using global mode (DI won't work) and switch to usage of @UseInterceptors() */
 		{
 			provide: APP_INTERCEPTOR,
 			useClass: PlayerInterceptor,
+		},
+		{
+			provide: APP_GUARD,
+			useClass: ThrottlerGuard,
 		},
 		AppService,
 	],

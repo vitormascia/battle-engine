@@ -34,7 +34,7 @@ export default [
 			"@typescript-eslint/no-unnecessary-condition": "error",
 			"@typescript-eslint/require-await": "error",
 			"@typescript-eslint/array-type": ["error", { default: "generic" }],
-			"@typescript-eslint/no-explicit-any": "warn",
+			"@typescript-eslint/no-explicit-any": "off",
 
 			/* Disabled/relaxed where appropriate */
 			"@typescript-eslint/no-empty-interface": "off",
@@ -177,7 +177,7 @@ export default [
 			"@typescript-eslint/no-unnecessary-condition": "error",
 			"@typescript-eslint/require-await": "error",
 			"@typescript-eslint/array-type": ["error", { default: "generic" }],
-			"@typescript-eslint/no-explicit-any": "warn",
+			"@typescript-eslint/no-explicit-any": "off",
 
 			/* Disabled/relaxed where appropriate */
 			"@typescript-eslint/no-empty-interface": "off",

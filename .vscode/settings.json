@@ -16,4 +16,7 @@
         "javascript",
         "typescript"
     ],
+    "[sql]": {
+        "editor.defaultFormatter": "adpyke.vscode-sql-formatter"
+    },
 }

@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 
 import { QueueName } from "../app/queues.enum.js";
+import { PlayersService } from "../players/players.service.js";
 import { BattlesService } from "./battles.service.js";
 import { BattleJob } from "./battles.type.js";
 
@@ -17,7 +18,10 @@ import { BattleJob } from "./battles.type.js";
 export class BattlesConsumer extends WorkerHost {
 	private readonly logger = new Logger(this.constructor.name);
 
-	constructor(private readonly battlesService: BattlesService) {
+	constructor(
+		private readonly battlesService: BattlesService,
+		private readonly playersService: PlayersService,
+	) {
 		super();
 	}
 
@@ -67,15 +71,32 @@ export class BattlesConsumer extends WorkerHost {
 			opponentId,
 		} = job.data;
 
-		const { winner, loser } = await this.battlesService.runBattleLoop(
+		const battle = await this.battlesService.create({
 			challengerId,
 			opponentId,
+		});
+
+		const { winner, loser } = await this.battlesService.battle(
+			challengerId,
+			opponentId,
+			battle.id,
 		);
 
-		await this.battlesService.lootResources(
+		const { battleSnapshot } = await this.battlesService.lootResources(
 			winner,
 			loser,
 		);
+
+		await this.battlesService.update(battle.id, {
+			winnerId: winner.id,
+			loserId: loser.id,
+			battleSnapshot,
+		});
+
+		/* Player score in the battle is represented by the Loot (Gold Loot + Silver Loot) */
+		const score = battleSnapshot.loot;
+
+		await this.playersService.incrementScore(winner.id, score);
 	}
 
 	@OnWorkerEvent("active")
@@ -127,10 +148,10 @@ export class BattlesConsumer extends WorkerHost {
 		this.logger.warn("QUEUE::ON_PAUSED");
 	}
 
-	// @OnWorkerEvent("progress")
-	// public onProgress(job: BattleJob, progress: number | object): void {
-	// 	this.logJob("JOB::ON_PROGRESS", job, "debug", { progress });
-	// }
+	@OnWorkerEvent("progress")
+	public onProgress(job: BattleJob, progress: number | object): void {
+		this.logJob("JOB::ON_PROGRESS", job, "debug", { progress });
+	}
 
 	@OnWorkerEvent("ready")
 	public onReady(): void {

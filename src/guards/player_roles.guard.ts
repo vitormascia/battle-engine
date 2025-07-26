@@ -45,7 +45,7 @@ export class PlayerRolesGuard implements CanActivate {
 		const playerId = req.headers["user-id"];
 
 		if (typeof playerId !== "string") {
-			throw new UnauthorizedException("User-Id Header has to be a String");
+			throw new UnauthorizedException("User-Id Header has to be set");
 		}
 
 		if (!isUUID(playerId)) {
@@ -88,7 +88,7 @@ export class PlayerRolesGuard implements CanActivate {
 			context.getClass(),
 		]);
 
-		const playerHasRequiredRoles = requiredRoles.every((role) => player.roles.includes(role));
+		const playerHasRequiredRoles = requiredRoles.some((role) => player.roles.includes(role));
 
 		this.logger.debug("ROLES_GUARD_RESULT", {
 			request: {

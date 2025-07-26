@@ -42,12 +42,14 @@ export class PlayerEntity extends AbstractEntity implements Player {
 	@Column({
 		type: "integer",
 		nullable: false,
+		default: 0,
 	})
 	gold: number;
 
 	@Column({
 		type: "integer",
 		nullable: false,
+		default: 0,
 	})
 	silver: number;
 
@@ -70,6 +72,13 @@ export class PlayerEntity extends AbstractEntity implements Player {
 	hitPoints: number;
 
 	@Column({
+		type: "integer",
+		nullable: false,
+		default: 0,
+	})
+	score: number;
+
+	@Column({
 		type: "enum",
 		nullable: false,
 		array: true,
@@ -89,4 +98,41 @@ export class PlayerEntity extends AbstractEntity implements Player {
 
 	@OneToMany(() => BattleEntity, (battle) => battle.loser)
 	lostBattles: Relation<Array<BattleEntity>>;
+
+	public get bio(): string {
+		return `
+			Greetings 👋🏻 I am ${this.name}
+
+			📜 Description:
+			"${this.description}"
+
+			===========================
+			💰 Resources
+			===========================
+			🟡 Gold: ${this.gold.toLocaleString()}
+			⚪ Silver: ${this.silver.toLocaleString()}
+			⚪ Silver: ${this.silver.toLocaleString()}
+
+			===========================
+			⚔️ Stats
+			===========================
+			🗡 Attack: ${this.attack.toLocaleString()}
+			🛡 Defense: ${this.defense.toLocaleString()}
+			❤️ HP: ${this.hitPoints.toLocaleString()}
+			🏆 Score: ${this.score.toLocaleString()}
+
+			===========================
+			🎭 Roles
+			===========================
+			- ${this.roles.join("\n- ")}
+
+			===========================
+			📚 Battle History
+			===========================
+			🧨 Battles as Challenger: ${this.battlesAsChallenger.length}
+			🧱 Battles as Opponent: ${this.battlesAsOpponent.length}
+			🥇 Won Battles: ${this.wonBattles.length}
+			💀 Lost Battles: ${this.lostBattles.length}
+		`;
+	}
 }

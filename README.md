@@ -8,7 +8,43 @@
 
 This repository contains the implementation of the **Backend Development Hands-On Test** made by **Scopely**. The goal is to build a simple core system for a turn-based fighting game, focusing on Clean Architecture, game logic, and turn management.
 
-## ⚙️ Running the app
+## 🎛️ Running the app
+
+First things first, set up your `.env`
+
+```env
+#-------------
+# Application 
+#-------------
+
+APP_NAME="battle-engine"
+APP_PORT="3000"
+NODE_ENV="local"
+CORS_ORIGIN="http://localhost:3000,https://example.com"
+
+#------------
+# PostgreSQL
+#------------
+
+POSTGRES_HOST="localhost"
+POSTGRES_PORT="5432"
+POSTGRES_USERNAME="root"
+POSTGRES_PASSWORD="root"
+POSTGRES_DATABASE="battle_engine"
+
+#------------
+# Redis
+#------------
+
+REDIS_HOST="localhost"
+REDIS_PORT="6379"
+
+#------------
+# Throttler
+#------------
+THROTTLER_LIMIT="100"
+THROTTLER_TTL="60"
+```
 
 1. Lorem
 ```

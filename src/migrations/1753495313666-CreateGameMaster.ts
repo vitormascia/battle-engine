@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class CreateGameMaster1753330819737 implements MigrationInterface {
-	name = "CreateGameMaster1753330819737";
+export class CreateGameMaster1753495313666 implements MigrationInterface {
+	name = "CreateGameMaster1753495313666";
 
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		await queryRunner.query(`

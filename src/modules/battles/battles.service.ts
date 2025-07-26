@@ -1,6 +1,7 @@
 
 import { InjectQueue } from "@nestjs/bullmq";
 import {
+	ConflictException,
 	Injectable,
 	Logger,
 	NotFoundException,
@@ -19,10 +20,26 @@ import { v4 as uuidv4 } from "uuid";
 
 import { QueueName } from "../app/queues.enum.js";
 import { PlayerEntity } from "../players/players.entity.js";
+import { PlayersService } from "../players/players.service.js";
 import { Player } from "../players/players.type.js";
-import { SubmitBattleBodyDto } from "./battles.dtos.js";
-import { BattleJobData, BattleResult } from "./battles.interface.js";
-import { PlayerInBattle } from "./battles.type.js";
+import { BattleEntity } from "./battles.entity.js";
+import {
+	BattleJobData,
+	BattleOutcome,
+	BattleResult,
+	BattleSnapshot,
+	LootResourcesResult,
+	TurnSnapshot,
+} from "./battles.interface.js";
+import {
+	Battle,
+	CreateBattle,
+	CreateTurn,
+	PlayerInBattle,
+	Turn,
+	UpdateBattle,
+} from "./battles.type.js";
+import { TurnEntity } from "./turns.entity.js";
 
 @Injectable()
 export class BattlesService {
@@ -31,13 +48,75 @@ export class BattlesService {
 	constructor(
 		@InjectRepository(PlayerEntity)
 		private readonly playersRepository: Repository<PlayerEntity>,
-		// @InjectRepository(BattleEntity)
-		// private readonly battlesRepository: Repository<BattleEntity>,
-		// @InjectRepository(TurnEntity)
-		// private readonly turnsRepository: Repository<TurnEntity>,
+		@InjectRepository(BattleEntity)
+		private readonly battlesRepository: Repository<BattleEntity>,
+		@InjectRepository(TurnEntity)
+		private readonly turnsRepository: Repository<TurnEntity>,
 		@InjectQueue(QueueName.Battles)
 		private readonly battlesQueue: Queue<BattleJobData>,
+		private readonly playersService: PlayersService,
 	) { }
+
+	public async create(createBattle: CreateBattle): Promise<Battle> {
+		const insertBattleResult = await this.battlesRepository.insert(createBattle);
+
+		const battleId: string = insertBattleResult.identifiers[0].id;
+
+		const battle = await this.battlesRepository.findOneBy({
+			id: battleId,
+		});
+
+		if (!battle) {
+			throw new NotFoundException("Battle not found");
+		}
+
+		this.logger.debug("CREATED_BATTLE", {
+			createBattle,
+			battle,
+		});
+
+		return battle;
+	}
+
+	public async update(battleId: string, updateBattle: UpdateBattle): Promise<Battle> {
+		await this.battlesRepository.update(battleId, updateBattle);
+
+		const battle = await this.battlesRepository.findOneBy({
+			id: battleId,
+		});
+
+		if (!battle) {
+			throw new NotFoundException("Battle not found");
+		}
+
+		this.logger.debug("UPDATED_BATTLE", {
+			updateBattle,
+			battle,
+		});
+
+		return battle;
+	}
+
+	private async createTurn(createTurn: CreateTurn): Promise<Turn> {
+		const insertTurnResult = await this.turnsRepository.insert(createTurn);
+
+		const turnId: string = insertTurnResult.identifiers[0].id;
+
+		const turn = await this.turnsRepository.findOneBy({
+			id: turnId,
+		});
+
+		if (!turn) {
+			throw new NotFoundException("Turn not found");
+		}
+
+		this.logger.debug("CREATED_BATTLE", {
+			createTurn,
+			turn,
+		});
+
+		return turn;
+	}
 
 	private async getBattlePlayers(
 		challengerId: string,
@@ -93,7 +172,7 @@ export class BattlesService {
 		return battlePlayers;
 	}
 
-	private getBattleResult(player1: PlayerInBattle, player2: PlayerInBattle): BattleResult {
+	private getBattleOutcome(player1: PlayerInBattle, player2: PlayerInBattle): BattleOutcome {
 		const player1IsDead = player1.hitPoints === 0;
 		const player2IsDead = player2.hitPoints === 0;
 
@@ -101,7 +180,7 @@ export class BattlesService {
 			throw new UnprocessableEntityException("At least one Player must be dead in order to get a Battle result");
 		}
 
-		const battleResult = player1IsDead ? {
+		const battleOutcome = player1IsDead ? {
 			winner: player2,
 			loser: player1,
 		} : {
@@ -109,7 +188,7 @@ export class BattlesService {
 			loser: player2,
 		};
 
-		return battleResult;
+		return battleOutcome;
 	}
 
 	private hasBattleEnded(player1: PlayerInBattle, player2: PlayerInBattle): boolean {
@@ -121,7 +200,11 @@ export class BattlesService {
 		return hasBattleEnded;
 	}
 
-	private calculateDamage(attacker: PlayerInBattle, defender: PlayerInBattle): void {
+	private calculateDamage(
+		attacker: PlayerInBattle,
+		defender: PlayerInBattle,
+		turnSnapshot: Partial<TurnSnapshot>,
+	): void {
 		this.logger.debug("CALCULATE_DAMAGE::PAYLOAD", {
 			attacker,
 			defender,
@@ -143,7 +226,7 @@ export class BattlesService {
 		defender.hitPoints = newDefenderHitPoints.toNumber();
 
 		const defenderHitPointsReducedPercentage = new BigNumber(attacker.attack)
-			.dividedBy(defender.originalHitPoints)
+			.dividedBy(defender.initialHitPoints)
 			.times(100);
 
 		const attackReductionMultiplier = new BigNumber(100).minus(defenderHitPointsReducedPercentage)
@@ -154,8 +237,8 @@ export class BattlesService {
 			.integerValue(BigNumber.ROUND_HALF_DOWN)
 			.toNumber();
 
-		const attackCap = new BigNumber(defender.originalAttack)
-			.dividedBy(2)
+		const halvedAttack = new BigNumber(defender.initialAttack).dividedBy(2);
+		const attackCap = halvedAttack
 			.integerValue(BigNumber.ROUND_HALF_DOWN)
 			.toNumber();
 
@@ -176,6 +259,14 @@ export class BattlesService {
 			attackCap,
 			newDefenderAttack,
 		});
+
+		turnSnapshot.newDefenderHitPoints = newDefenderHitPoints.toNumber();
+		turnSnapshot.defenderHitPointsReducedPercentage = defenderHitPointsReducedPercentage.toNumber();
+		turnSnapshot.attackReductionMultiplier = attackReductionMultiplier;
+		turnSnapshot.newDefenderAttackCandidate = newDefenderAttackCandidate;
+		turnSnapshot.halvedAttack = halvedAttack.toNumber();
+		turnSnapshot.attackCap = attackCap;
+		turnSnapshot.newDefenderAttack = newDefenderAttack;
 	}
 
 	/*
@@ -188,14 +279,16 @@ export class BattlesService {
 			• As Defense > Attack => Hit Chance goes closer to 0%
 			• As Defense < Attack => Hit Chance goes closer to 100%
 	*/
-	private isHit(attacker: PlayerInBattle, defender: PlayerInBattle): boolean {
+	private isHit(attacker: PlayerInBattle, defender: PlayerInBattle, turnSnapshot: Partial<TurnSnapshot>): boolean {
 		this.logger.debug("HIT_OR_MISS::PAYLOAD", {
 			attacker,
 			defender,
 		});
 
 		const hitChance = new BigNumber(attacker.attack)
-			.dividedBy(new BigNumber(attacker.attack).plus(defender.originalDefense));
+			.dividedBy(new BigNumber(attacker.attack).plus(defender.defense));
+
+		const hitChancePercentage = hitChance.times(100).toNumber();
 
 		const attackRoll = Math.random();
 
@@ -205,15 +298,20 @@ export class BattlesService {
 			attacker,
 			defender,
 			hitChance: hitChance.toNumber(),
-			hitChancePercentage: hitChance.times(100).toNumber(),
+			hitChancePercentage,
 			attackRoll,
 			isHit,
 		});
 
+		turnSnapshot.hitChance = hitChance.toNumber();
+		turnSnapshot.hitChancePercentage = hitChancePercentage;
+		turnSnapshot.attackRoll = attackRoll;
+		turnSnapshot.isHit = isHit;
+
 		return isHit;
 	}
 
-	public async runBattleLoop(challengerId: string, opponentId: string): Promise<BattleResult> {
+	public async battle(challengerId: string, opponentId: string, battleId: string): Promise<BattleResult> {
 		this.logger.debug("RUN_BATTLE_LOOP::PAYLOAD", {
 			challengerId,
 			opponentId,
@@ -235,21 +333,20 @@ export class BattlesService {
 
 		let attacker: PlayerInBattle = {
 			..._.cloneDeep(challenger),
-			originalAttack: challenger.attack,
-			originalDefense: challenger.defense,
-			originalHitPoints: challenger.hitPoints,
+			initialAttack: challenger.attack,
+			initialHitPoints: challenger.hitPoints,
 		};
 		let defender: PlayerInBattle = {
 			..._.cloneDeep(opponent),
-			originalAttack: opponent.attack,
-			originalDefense: opponent.defense,
-			originalHitPoints: opponent.hitPoints,
+			initialAttack: opponent.attack,
+			initialHitPoints: opponent.hitPoints,
 		};
 
 		let bothAreAlive = true;
 		let turnIndex = 0;
 
 		let battleResult: BattleResult;
+		const turnsSnapshot: Array<TurnSnapshot> = [];
 
 		while (bothAreAlive) {
 			this.logger.debug(`RUN_BATTLE_LOOP::TURN_${turnIndex}`, {
@@ -260,15 +357,30 @@ export class BattlesService {
 				turnIndex,
 			});
 
-			const isHit = this.isHit(attacker, defender);
+			const turnSnapshot: Partial<TurnSnapshot> = {
+				turnIndex,
+				initialAttacker: attacker,
+				initialDefender: defender,
+			};
+
+			const isHit = this.isHit(attacker, defender, turnSnapshot);
+
+			turnSnapshot.isLastTurn = false;
 
 			if (isHit) {
-				this.calculateDamage(attacker, defender);
+				this.calculateDamage(attacker, defender, turnSnapshot);
 
 				const hasBattleEnded = this.hasBattleEnded(attacker, defender);
 
+				turnSnapshot.isLastTurn = hasBattleEnded;
+
 				if (hasBattleEnded) {
-					battleResult = this.getBattleResult(attacker, defender);
+					const battleOutcome = this.getBattleOutcome(attacker, defender);
+
+					battleResult = {
+						...battleOutcome,
+						turnsSnapshot: [],
+					};
 
 					this.logger.debug(`RUN_BATTLE_LOOP::TURN_${turnIndex}::BATTLE_ENDED`, {
 						challenger,
@@ -276,12 +388,25 @@ export class BattlesService {
 						attacker,
 						defender,
 						turnIndex,
-						battleResult,
+						battleOutcome,
 					});
 
 					bothAreAlive = false;
 				}
 			}
+
+			turnSnapshot.attacker = attacker;
+			turnSnapshot.defender = defender;
+
+			await this.createTurn({
+				index: turnIndex,
+				battleId,
+				/* Guaranteed to be fully set (not Partial<TurnSnapshot>) */
+				turnSnapshot: turnSnapshot as TurnSnapshot,
+			});
+
+			/* Guaranteed to be fully set (not Partial<TurnSnapshot>) */
+			turnsSnapshot.push(turnSnapshot as TurnSnapshot);
 
 			const nextAttacker = _.cloneDeep(defender);
 			const nextDefender = _.cloneDeep(attacker);
@@ -298,9 +423,14 @@ export class BattlesService {
 			attacker,
 			defender,
 			turnIndex,
+			/* Guaranteed to be set */
 			battleResult: battleResult!,
 		});
 
+		/* Guaranteed to be set */
+		battleResult!.turnsSnapshot = turnsSnapshot;
+
+		/* Guaranteed to be set */
 		return battleResult!;
 	}
 
@@ -308,6 +438,7 @@ export class BattlesService {
 		const MINIMUM_LOOT_PERCENTAGE = 5;
 		const MAXIMUM_LOOT_PERCENTAGE = 10;
 		const seed = Math.random();
+
 		const lootPercentage = new BigNumber(seed)
 			.times(new BigNumber(MAXIMUM_LOOT_PERCENTAGE)
 				.minus(MINIMUM_LOOT_PERCENTAGE)
@@ -320,7 +451,10 @@ export class BattlesService {
 		return lootPercentage;
 	}
 
-	public async lootResources(winner: Player, loser: Player): Promise<void> {
+	public async lootResources(
+		winner: Player,
+		loser: Player,
+	): Promise<LootResourcesResult> {
 		this.logger.debug("LOOT_RESOURCES::PAYLOAD", {
 			winner,
 			loser,
@@ -334,11 +468,7 @@ export class BattlesService {
 			.integerValue(BigNumber.ROUND_CEIL)
 			.toNumber();
 
-		await this.playersRepository.decrement({ id: loser.id }, "gold", goldLoot);
-		await this.playersRepository.decrement({ id: loser.id }, "silver", silverLoot);
-
-		await this.playersRepository.increment({ id: winner.id }, "gold", goldLoot);
-		await this.playersRepository.increment({ id: winner.id }, "silver", silverLoot);
+		await this.playersService.awardVictoryLoot(winner, loser, goldLoot, silverLoot);
 
 		this.logger.debug("LOOT_RESOURCES::RESULT", {
 			winner,
@@ -347,17 +477,65 @@ export class BattlesService {
 			goldLoot,
 			silverLoot,
 		});
+
+		const loot = new BigNumber(goldLoot).plus(silverLoot)
+			.toNumber();
+
+		const winnerGold = new BigNumber(winner.gold);
+		const winnerSilver = new BigNumber(winner.silver);
+		const loserGold = new BigNumber(loser.gold);
+		const loserSilver = new BigNumber(loser.silver);
+
+		const battleSnapshot: BattleSnapshot = {
+			loot,
+			goldLoot,
+			silverLoot,
+			lootPercentage,
+			winner: {
+				gold: {
+					before: winnerGold.minus(goldLoot).toNumber(),
+					after: winnerGold.plus(goldLoot).toNumber(),
+				},
+				silver: {
+					before: winnerSilver.minus(silverLoot).toNumber(),
+					after: winnerSilver.plus(silverLoot).toNumber(),
+				},
+			},
+			loser: {
+				gold: {
+					before: loserGold.minus(goldLoot).toNumber(),
+					after: loserGold.plus(goldLoot).toNumber(),
+				},
+				silver: {
+					before: loserSilver.minus(silverLoot).toNumber(),
+					after: loserSilver.plus(silverLoot).toNumber(),
+				},
+			},
+		};
+
+		return { battleSnapshot };
 	}
 
-	public async submit(submitBattleDto: SubmitBattleBodyDto): Promise<void> {
+	private ensurePlayersHaveEnoughResources(player1: Player, player2: Player): void {
+		if (
+			(!player1.gold && !player1.silver)
+			|| (!player2.gold && !player2.silver)
+		) {
+			throw new ConflictException("At least one of the Players is out of resources! Minimum of 1 Gold or 1 Silver is required. Buy more or watch ads to collect ’em!");
+		}
+	}
+
+	public async submit(challengerId: string, opponentId: string): Promise<void> {
 		const { challenger, opponent } = await this.getBattlePlayers(
-			submitBattleDto.challengerId,
-			submitBattleDto.opponentId,
+			challengerId,
+			opponentId,
 			{
 				id: true,
 				name: true,
 			},
 		);
+
+		this.ensurePlayersHaveEnoughResources(challenger, opponent);
 
 		const traceId = uuidv4();
 		const battleJobData: BattleJobData = {

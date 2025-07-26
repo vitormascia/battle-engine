@@ -1,4 +1,3 @@
-import BigNumber from "bignumber.js";
 import {
 	Check,
 	Column,
@@ -12,6 +11,7 @@ import {
 
 import { AbstractEntity } from "../app/base.entity.js";
 import { PlayerEntity } from "../players/players.entity.js";
+import { BattleSnapshot } from "./battles.interface.js";
 import { Battle } from "./battles.type.js";
 import { TurnEntity } from "./turns.entity.js";
 
@@ -30,10 +30,13 @@ import { TurnEntity } from "./turns.entity.js";
 	)
 	AND
 	(
-		"goldLoot" >= 0
-		AND "goldLoot" <= 100000000
-		AND "silverLoot" >= 0
-		AND "silverLoot" <= 100000000
+		"battleSnapshot" IS NULL
+		OR (
+			("battleSnapshot"->>'goldLoot')::int >= 0
+			AND ("battleSnapshot"->>'goldLoot')::int <= 1000000000
+			AND ("battleSnapshot"->>'silverLoot')::int >= 0
+			AND ("battleSnapshot"->>'silverLoot')::int <= 1000000000
+		)
 	)
 `)
 export class BattleEntity extends AbstractEntity implements Battle {
@@ -109,21 +112,11 @@ export class BattleEntity extends AbstractEntity implements Battle {
 	loserId: string | null;
 
 	@Column({
-		type: "integer",
-		nullable: false,
+		type: "jsonb",
+		nullable: true,
+		default: null,
 	})
-	goldLoot: number;
-
-	@Column({
-		type: "integer",
-		nullable: false,
-	})
-	silverLoot: number;
-
-	public get loot(): number {
-		return new BigNumber(this.goldLoot).plus(this.silverLoot)
-			.toNumber();
-	}
+	battleSnapshot: BattleSnapshot | null;
 
 	@OneToMany(
 		() => TurnEntity,

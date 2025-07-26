@@ -1,10 +1,12 @@
-import "dotenv/config";
+// import "dotenv/config";
 
 import {
 	DEFAULT_APP_PORT,
 	DEFAULT_CORS_ORIGIN,
 	DEFAULT_POSTGRES_PORT,
 	DEFAULT_REDIS_PORT,
+	DEFAULT_THROTTLER_LIMIT,
+	DEFAULT_THROTTLER_TTL,
 } from "../../constants/app.constants.js";
 import { EMPTY_STRING } from "../../constants/symbols.constants.js";
 
@@ -19,6 +21,10 @@ const configuration = (): Record<string, any> => {
 			name: setConfig(process.env.APP_NAME),
 			environment: setConfig(process.env.NODE_ENV),
 			corsOrigin: setConfig(process.env.CORS_ORIGIN, DEFAULT_CORS_ORIGIN),
+			throttler: {
+				limit: parseInt(setConfig(process.env.THROTTLER_LIMIT, DEFAULT_THROTTLER_LIMIT)),
+				ttl: parseInt(setConfig(process.env.THROTTLER_TTL, DEFAULT_THROTTLER_TTL)),
+			},
 		},
 		databases: {
 			postgres: {

@@ -7,6 +7,7 @@ import { Repository } from "typeorm";
 
 import { CreatePlayerBodyDto } from "./players.dtos.js";
 import { PlayerEntity } from "./players.entity.js";
+import { Leaderboard } from "./players.interface.js";
 import { Player } from "./players.type.js";
 
 @Injectable()
@@ -24,5 +25,45 @@ export class PlayersService {
 		this.logger.debug("CREATED_PLAYER", { player });
 
 		return player;
+	}
+
+	public async incrementScore(playerId: string, score: number): Promise<void> {
+		await this.playersRepository.increment({ id: playerId }, "score", score);
+	}
+
+	public async awardVictoryLoot(
+		winner: Player,
+		loser: Player,
+		goldLoot: number,
+		silverLoot: number,
+	): Promise<void> {
+		await this.playersRepository.decrement({ id: loser.id }, "gold", goldLoot);
+		await this.playersRepository.decrement({ id: loser.id }, "silver", silverLoot);
+
+		await this.playersRepository.increment({ id: winner.id }, "gold", goldLoot);
+		await this.playersRepository.increment({ id: winner.id }, "silver", silverLoot);
+	}
+
+	public async getLeaderboard(): Promise<Leaderboard> {
+		const [players, playersAmount] = await this.playersRepository.findAndCount({
+			select: {
+				id: true,
+				score: true,
+			},
+			order: {
+				score: "DESC",
+			},
+		});
+
+		const leaderboard = {
+			size: playersAmount,
+			players: players.map(({ id, score }, rank) => ({
+				rank: ++rank,
+				id,
+				score,
+			})),
+		};
+
+		return leaderboard;
 	}
 }
