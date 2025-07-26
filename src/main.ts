@@ -1,5 +1,6 @@
 import helmet from "@fastify/helmet";
 import {
+	ConsoleLogger,
 	Logger,
 	ValidationPipe,
 } from "@nestjs/common";
@@ -11,6 +12,7 @@ import {
 } from "@nestjs/platform-fastify";
 
 import { COMMA } from "./constants/symbols.constants.js";
+import { HttpExceptionFilter } from "./filters/http_exception.filter.js";
 import { AppModule } from "./modules/app/app.module.js";
 import { TrimPipe } from "./pipes/trim.pipe.js";
 
@@ -24,8 +26,19 @@ async function bootstrap(): Promise<void> {
 	const app = await NestFactory.create<NestFastifyApplication>(
 		AppModule,
 		fastifyAdapter,
-		{ rawBody: true },
+		{
+			rawBody: true,
+			logger: new ConsoleLogger({
+				logLevels: ["debug", "log", "verbose", "warn", "error", "fatal"],
+				prefix: "BattleEngine",
+				timestamp: true,
+				colors: true,
+				sorted: true,
+			}),
+		},
 	);
+
+	app.useGlobalFilters(new HttpExceptionFilter());
 
 	app.useGlobalPipes(new ValidationPipe({
 		whitelist: true,
