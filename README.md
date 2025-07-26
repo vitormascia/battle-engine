@@ -184,13 +184,12 @@ I designed the project with a clear, modular folder structure to ensure maintain
 
 I chose **NestJS** because it's my favorite Node.js framework. It’s like Express or Fastify on steroids — built with TypeScript, powered by strong architecture principles, and backed by an amazing community. NestJS comes with built-in support for modules, decorators, guards, interceptors, DI, testing tools, and much more. It helped me focus on business logic instead of boilerplate setup.
 
-### 🧠 Database: PostgreSQL + Redis
+### 🛢 Database: PostgreSQL & Redis
 
 The spec suggested using **Redis** for everything. However, using an **in-memory NoSQL store** for core persistent data like Players, Battles, and Turns didn’t feel right — especially since these are **non-ephemeral** (i.e., persistent and critical for gameplay and progression). Instead, I used:
 
-* 🧊 **PostgreSQL**: A fine-grained SQL RDBMS to store all game entities.
-* 🚦 **Redis**: Specifically used for **locking player availability** and **queue management** via BullMQ.
-* 🎯 Redis is great for fast access, but storing core entities like battles in memory risks **data loss** and **consistency issues** on crash or restart.
+* 🐘 **PostgreSQL**: A fine-grained SQL RDBMS to store all game entities.
+* 🟥 **Redis**: Specifically used for **locking player availability** and **queue management** via BullMQ. Redis is great for fast access, but storing core entities like battles in memory risks **data loss** and **consistency issues** on crash or restart.
 
 ### 🔐 Role-Based Access Control (RBAC)
 
