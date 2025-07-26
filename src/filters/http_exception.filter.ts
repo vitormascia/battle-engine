@@ -17,14 +17,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
 	public catch(exception: HttpException, host: ArgumentsHost): void {
 		const ctx = host.switchToHttp();
+
 		const req = ctx.getRequest<FilterRequest>();
 		const res = ctx.getResponse<FastifyReply>();
 
-		const status = exception.getStatus();
+		const error = {
+			name: exception.name,
+			message: exception.message,
+			cause: exception.cause,
+			stack: exception.stack,
+			status: exception.getStatus(),
+			response: exception.getResponse(),
+			initName: exception.initName(),
+			initCause: exception.initCause(),
+			initMessage: exception.initMessage(),
+		};
 
-		const now = new Date();
-
-		this.logger.error("FETCHING_USER_DATA_FROM_HEADERS", {
+		this.logger.error("HTTP_EXCEPTION_FILTER", {
 			request: {
 				method: req.method,
 				url: req.url,
@@ -41,15 +50,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
 					code: res.statusCode,
 				},
 			},
+			error,
 		});
 
 		res
-			.status(status)
+			.status(error.status)
 			.type("application/json")
-			.send({
-				statusCode: status,
-				timestamp: now.toISOString(),
-				path: req.url,
-			});
+			.send({ error });
 	}
 }

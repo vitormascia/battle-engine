@@ -2,6 +2,7 @@
 import { InjectQueue } from "@nestjs/bullmq";
 import {
 	ConflictException,
+	// Inject,
 	Injectable,
 	Logger,
 	NotFoundException,
@@ -10,6 +11,7 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import BigNumber from "bignumber.js";
 import { Queue } from "bullmq";
+// import { Redis } from "ioredis";
 import _ from "lodash";
 import {
 	FindOneOptions,
@@ -54,6 +56,8 @@ export class BattlesService {
 		private readonly turnsRepository: Repository<TurnEntity>,
 		@InjectQueue(QueueName.Battles)
 		private readonly battlesQueue: Queue<BattleJobData>,
+		// @Inject("REDIS_CLIENT")
+		// private readonly redisClient: Redis,
 		private readonly playersService: PlayersService,
 	) { }
 
@@ -532,6 +536,8 @@ export class BattlesService {
 			{
 				id: true,
 				name: true,
+				gold: true,
+				silver: true,
 			},
 		);
 
