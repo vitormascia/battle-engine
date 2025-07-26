@@ -2,6 +2,7 @@
 
 import {
 	DEFAULT_APP_PORT,
+	DEFAULT_BATTLE_LOCK_TTL,
 	DEFAULT_CORS_ORIGIN,
 	DEFAULT_POSTGRES_PORT,
 	DEFAULT_REDIS_PORT,
@@ -37,6 +38,9 @@ const configuration = (): Record<string, any> => {
 			redis: {
 				host: setConfig(process.env.REDIS_HOST),
 				port: parseInt(setConfig(process.env.REDIS_PORT, DEFAULT_REDIS_PORT)),
+				ttls: {
+					battleLock: parseInt(setConfig(process.env.BATTLE_LOCK_TTL, DEFAULT_BATTLE_LOCK_TTL)),
+				},
 			},
 		},
 	};

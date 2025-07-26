@@ -69,3 +69,8 @@ export interface BattleResult extends BattleOutcome {
 export interface LootResourcesResult {
 	battleSnapshot: BattleSnapshot;
 }
+
+export interface LockPlayersForBattleResult {
+	isPlayer1Locked: "OK" | null;
+	isPlayer2Locked: "OK" | null;
+}

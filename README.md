@@ -38,6 +38,7 @@ POSTGRES_DATABASE="battle_engine"
 
 REDIS_HOST="localhost"
 REDIS_PORT="6379"
+BATTLE_LOCK_TTL="300"
 
 #------------
 # Throttler

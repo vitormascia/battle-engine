@@ -8,10 +8,12 @@ import {
 } from "../../constants/time.constants.js";
 import { QueueName } from "../app/queues.enum.js";
 import { PlayersModule } from "../players/players.module.js";
+import { RedisModule } from "../redis/redis.module.js";
 import { BattlesController } from "./battles.controller.js";
 import { BattleEntity } from "./battles.entity.js";
 import { BattlesConsumer } from "./battles.processor.js";
 import { BattlesService } from "./battles.service.js";
+import { BattleLocksService } from "./locks.service.js";
 import { TurnEntity } from "./turns.entity.js";
 
 const BattlesQueueDynamicModule = BullModule.registerQueue({
@@ -40,17 +42,20 @@ const BattlesQueueDynamicModule = BullModule.registerQueue({
 			TurnEntity,
 		]),
 		BattlesQueueDynamicModule,
+		RedisModule,
 		PlayersModule,
 	],
 	controllers: [BattlesController],
 	providers: [
 		BattlesService,
+		BattleLocksService,
 		BattlesConsumer,
 	],
 	exports: [
 		TypeOrmModule,
 		BattlesQueueDynamicModule,
 		BattlesService,
+		BattleLocksService,
 	],
 })
 export class BattlesModule { }

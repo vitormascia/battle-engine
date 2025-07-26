@@ -2,7 +2,6 @@
 import { InjectQueue } from "@nestjs/bullmq";
 import {
 	ConflictException,
-	// Inject,
 	Injectable,
 	Logger,
 	NotFoundException,
@@ -11,7 +10,6 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import BigNumber from "bignumber.js";
 import { Queue } from "bullmq";
-// import { Redis } from "ioredis";
 import _ from "lodash";
 import {
 	FindOneOptions,
@@ -41,6 +39,7 @@ import {
 	Turn,
 	UpdateBattle,
 } from "./battles.type.js";
+import { BattleLocksService } from "./locks.service.js";
 import { TurnEntity } from "./turns.entity.js";
 
 @Injectable()
@@ -56,10 +55,10 @@ export class BattlesService {
 		private readonly turnsRepository: Repository<TurnEntity>,
 		@InjectQueue(QueueName.Battles)
 		private readonly battlesQueue: Queue<BattleJobData>,
-		// @Inject("REDIS_CLIENT")
-		// private readonly redisClient: Redis,
+		private readonly battleLocksService: BattleLocksService,
 		private readonly playersService: PlayersService,
-	) { }
+	) {
+	}
 
 	public async create(createBattle: CreateBattle): Promise<Battle> {
 		const insertBattleResult = await this.battlesRepository.insert(createBattle);
@@ -542,6 +541,8 @@ export class BattlesService {
 		);
 
 		this.ensurePlayersHaveEnoughResources(challenger, opponent);
+
+		await this.battleLocksService.acquireLocks(challenger.id, opponent.id);
 
 		const traceId = uuidv4();
 		const battleJobData: BattleJobData = {

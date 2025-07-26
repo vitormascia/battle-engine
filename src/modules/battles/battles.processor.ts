@@ -12,6 +12,7 @@ import { QueueName } from "../app/queues.enum.js";
 import { PlayersService } from "../players/players.service.js";
 import { BattlesService } from "./battles.service.js";
 import { BattleJob } from "./battles.type.js";
+import { BattleLocksService } from "./locks.service.js";
 
 @Processor(QueueName.Battles)
 @Injectable()
@@ -20,6 +21,7 @@ export class BattlesConsumer extends WorkerHost {
 
 	constructor(
 		private readonly battlesService: BattlesService,
+		private readonly battleLocksService: BattleLocksService,
 		private readonly playersService: PlayersService,
 	) {
 		super();
@@ -115,11 +117,18 @@ export class BattlesConsumer extends WorkerHost {
 	}
 
 	@OnWorkerEvent("completed")
-	public onCompleted(job: BattleJob, result: void, prev: string): void {
+	public async onCompleted(job: BattleJob, result: void, prev: string): Promise<void> {
 		this.logJob("JOB::ON_COMPLETED", job, "debug", {
 			result,
 			prev,
 		});
+
+		const { challengerId, opponentId } = job.data;
+
+		const player1LockKey = `lock:player:${challengerId}`;
+		const player2LockKey = `lock:player:${opponentId}`;
+
+		await this.battleLocksService.unlockPlayersForBattle(player1LockKey, player2LockKey);
 	}
 
 	@OnWorkerEvent("drained")
@@ -133,7 +142,7 @@ export class BattlesConsumer extends WorkerHost {
 	}
 
 	@OnWorkerEvent("failed")
-	public onFailed(job: BattleJob, error: Error, prev: string): void {
+	public async onFailed(job: BattleJob, error: Error, prev: string): Promise<void> {
 		this.logJob("JOB::ON_FAILED", job, "error", {
 			prev,
 			error: {
@@ -141,6 +150,13 @@ export class BattlesConsumer extends WorkerHost {
 				stack: error.stack,
 			},
 		});
+
+		const { challengerId, opponentId } = job.data;
+
+		const player1LockKey = `lock:player:${challengerId}`;
+		const player2LockKey = `lock:player:${opponentId}`;
+
+		await this.battleLocksService.unlockPlayersForBattle(player1LockKey, player2LockKey);
 	}
 
 	@OnWorkerEvent("paused")

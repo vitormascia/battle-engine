@@ -1,6 +1,5 @@
 import { BullModule } from "@nestjs/bullmq";
 import {
-	Logger,
 	MiddlewareConsumer,
 	Module,
 	NestModule,
@@ -16,7 +15,6 @@ import {
 	ThrottlerModule,
 } from "@nestjs/throttler";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Redis } from "ioredis";
 import path from "path";
 
 import { ONE_SECOND_IN_MILLISECONDS } from "../../constants/time.constants.js";
@@ -26,6 +24,7 @@ import { BattlesModule } from "../battles/battles.module.js";
 import { GameMastersModule } from "../game_masters/game_masters.module.js";
 import { HealthModule } from "../health_check/health_check.module.js";
 import { PlayersModule } from "../players/players.module.js";
+import { RedisModule } from "../redis/redis.module.js";
 import configuration from "./app.configuration.js";
 import { AppController } from "./app.controller.js";
 import { AppService } from "./app.service.js";
@@ -94,6 +93,7 @@ import { AppService } from "./app.service.js";
 		BattlesModule,
 		GameMastersModule,
 		HealthModule,
+		RedisModule,
 	],
 	controllers: [AppController],
 	providers: [
@@ -104,28 +104,6 @@ import { AppService } from "./app.service.js";
 		{
 			provide: APP_GUARD,
 			useClass: ThrottlerGuard,
-		},
-		{
-			provide: "REDIS_CLIENT",
-			inject: [ConfigService],
-			useFactory: (config: ConfigService): Redis => {
-				const logger = new Logger("RedisClient");
-
-				const redis = new Redis({
-					host: config.get("databases.redis.host"),
-					port: config.get<number>("databases.redis.port"),
-					lazyConnect: true,
-				});
-
-				redis.on("error", (error: Error): void => {
-					logger.error("REDIS_ERROR", {
-						message: error.message,
-						stack: error.stack,
-					});
-				});
-
-				return redis;
-			},
 		},
 		AppService,
 	],

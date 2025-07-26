@@ -78,6 +78,9 @@ async function bootstrap(): Promise<void> {
 	const redisConfig = {
 		host: configService.get<string>("databases.redis.host"),
 		port: configService.get<string>("databases.redis.port"),
+		ttls: {
+			battleLocks: configService.get<number>("databases.redis.ttls.battleLock"),
+		},
 	};
 
 	const logger = new Logger();
