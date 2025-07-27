@@ -70,21 +70,23 @@ npm run build
 docker compose up -d
 ```
 
-`5.` Optionally, if you wanna bring the containers down 
+`5.` Optionally, if you wanna bring the containers down
+
 ```
 docker compose down -v
 ```
 
 `6.` Run the app on watch mode (don’t worry, migrations auto run on every application launch)
+
 ```
 npm run start:dev
 ```
 
 `7.` You can check the app health
-```cURL
+
+```sh
 curl --request GET \
-  --url http://localhost:3000/health \
-  --header 'User-Agent: insomnia/11.3.0'
+  --url http://localhost:3000/health
 ```
 
 `8.` You can create Players as a Game Master. The `User-Id` has to be the a Game Master ID. A migration has already created that Game Master called `Scopely` for you! Retrieve it and set `gameMasterUUID`
@@ -96,11 +98,10 @@ FROM game_masters gm;
 
 Requires role `GameMasterRole.Moderator` (don’t worry, the `Scopely` Game Master already have that)
 
-```cURL
+```sh
 curl --request POST \
   --url http://localhost:3000/players \
   --header 'Content-Type: application/json' \
-  --header 'User-Agent: insomnia/11.3.0' \
   --header 'User-Id: gameMasterUUID' \
   --data '{
 	"name": "Cool Warrior",
@@ -123,11 +124,10 @@ FROM players p;
 
 Requires role `PlayerRole.Player`
 
-```
+```sh
 curl --request POST \
   --url http://localhost:3000/battles \
   --header 'Content-Type: application/json' \
-  --header 'User-Agent: insomnia/11.3.0' \
   --header 'User-Id: challengerPlayerUUID' \
   --data '{
 	"opponentId": "opponentPlayerUUID"
@@ -148,6 +148,14 @@ FROM battles b;
 
 SELECT *
 FROM turns t;
+```
+
+`11.` Check the Leaderboard
+
+```sh
+curl --request GET \
+  --url http://localhost:3000/players/leaderboard \
+  --header 'User-Id: playerUUID'
 ```
 
 ## 🧹 Code Quality and Readability
