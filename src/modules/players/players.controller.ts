@@ -28,7 +28,7 @@ export class PlayersController {
 
 	@Get("/leaderboard")
 	@UseGuards(PlayerRolesGuard)
-	@Roles(PlayerRole.PremiumPlayer)
+	@Roles(PlayerRole.Player)
 	public async getLeaderboard(): Promise<Leaderboard> {
 		return this.playersService.getLeaderboard();
 	}

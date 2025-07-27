@@ -25,7 +25,13 @@ export default new DataSource({
 		path.join(process.cwd(), "build/migrations/**/*.js"),
 	],
 	migrationsRun: true,
-	migrationsTransactionMode: "all",
+	/*
+		- Behavior: Each migration runs in its own transaction
+		- Pros: Migrations can override transaction = false safely (which is needed for
+		the PLAYER_SCORE_DESC_INDEX)
+		- Cons: Partial changes if one migration fails (earlier ones aren’t rolled back)
+	*/
+	migrationsTransactionMode: "each",
 	synchronize: false,
 	logging: true,
 	logger: "advanced-console",

@@ -14,7 +14,11 @@ import { BattlesService } from "./battles.service.js";
 import { BattleJob } from "./battles.type.js";
 import { BattleLocksService } from "./locks.service.js";
 
-@Processor(QueueName.Battles)
+/*
+	Allows up to 10 battles to be processed in parallel, as long as they don’t
+	involve overlapping players
+*/
+@Processor(QueueName.Battles, { concurrency: 10 })
 @Injectable()
 export class BattlesConsumer extends WorkerHost {
 	private readonly logger = new Logger(this.constructor.name);

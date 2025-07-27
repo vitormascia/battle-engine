@@ -87,7 +87,7 @@ curl --request GET \
   --header 'User-Agent: insomnia/11.3.0'
 ```
 
-`8.` You can create Players as a Game Master. The `User-Id` has to be the a Game Master ID. A migration already created that Game Master called `Scopely` for you! Retrieve it and set `gameMasterUUID`
+`8.` You can create Players as a Game Master. The `User-Id` has to be the a Game Master ID. A migration has already created that Game Master called `Scopely` for you! Retrieve it and set `gameMasterUUID`
 
 ```SQL
 SELECT *
@@ -114,7 +114,12 @@ curl --request POST \
 }'
 ```
 
-`9.` You can submit Battles as a Player. The `User-Id` has to be the **CHALLENGER** Player ID
+`9.` You can submit Battles as a Player. The `User-Id` has to be the **CHALLENGER** Player ID. A migration has already created two mock Players called `Dummy` and `Dummier` for you! Retrieve it and set `challengerPlayerUUID` and `opponentPlayerUUID`
+
+```SQL
+SELECT *
+FROM players p;
+```
 
 Requires role `PlayerRole.Player`
 
@@ -129,7 +134,7 @@ curl --request POST \
 }'
 ```
 
-`10.` Once a battle concludes, you can retrieve a full snapshot of its state by querying the relevant tables
+`10.` Once a battle concludes, you can retrieve a full snapshot of it’s state by querying the relevant tables
 
 ```SQL
 SELECT *
@@ -182,18 +187,18 @@ I designed the project with a clear, modular folder structure to ensure maintain
 
 ### 🧩 Why NestJS?
 
-I chose **NestJS** because it's my favorite Node.js framework. It’s like Express or Fastify on steroids — built with TypeScript, powered by strong architecture principles, and backed by an amazing community. NestJS comes with built-in support for modules, decorators, guards, interceptors, DI, testing tools, and much more. It helped me focus on business logic instead of boilerplate setup.
+I chose NestJS because it's my favorite Node.js framework. It’s like Express or Fastify on steroids (both of which NestJS can run on top of as underlying HTTP platforms, combining their speed with it’s own powerful abstraction layer) — built with TypeScript, powered by strong architecture principles, and backed by an amazing community. NestJS comes with built-in support for modules, decorators, guards, interceptors, DI, testing tools, and much more. The number of out-of-the-box features that NestJS provides significantly accelerates development, allowing you to focus on business logic rather than boilerplate or infrastructure concerns.
 
-### 🛢 Databases - 🐘 PostgreSQL 🟥 Redis
+### 🛢 Databases - 🐘 PostgreSQL & 🟥 Redis
 
-The spec suggested using **Redis** for everything. However, using an **in-memory NoSQL store** for core persistent data like Players, Battles, and Turns didn’t feel right — especially since these are **non-ephemeral** (i.e., persistent and critical for gameplay and progression). Instead, I used:
+The spec suggested using Redis for everything. However, using an in-memory NoSQL store for core persistent data like Players, Battles, and Turns didn’t feel right — especially since these are non-ephemeral (i.e., persistent and critical for gameplay and progression). Instead, I used:
 
 * **PostgreSQL**: A fine-grained SQL RDBMS to store all game entities.
-* **Redis**: Specifically used for **locking player availability** and **queue management** via BullMQ. Redis is great for fast access, but storing core entities like battles in memory risks **data loss** and **consistency issues** on crash or restart.
+* **Redis**: Specifically used for locking player availability and queue management via BullMQ. Redis is great for fast access, but storing core entities like battles in memory risks data loss and consistency issues on crash or restart.
 
 ### 🔐 Role-Based Access Control (RBAC)
 
-Since the app doesn’t feature a traditional **sign-up/sign-in system**, I introduced a **Basic RBAC layer** to control access based on roles. This ensures endpoints are protected while keeping the logic lightweight and spec-compliant.
+Since the app doesn’t feature a traditional sign-up/sign-in system, I introduced a Basic RBAC layer to control access based on roles. This ensures endpoints are protected while keeping the logic lightweight and spec-compliant.
 
 The system uses two enums to define roles:
 
@@ -207,46 +212,82 @@ For this implementation:
 
 This setup allows for future expansion, where premium players or clan leaders might have special privileges. Role enforcement is handled through custom decorators and guards, ensuring only users with valid roles can access protected routes.
 
-This adds a lightweight but effective **authorization layer**, keeping the app secure while staying spec-compliant.
+This adds a lightweight but effective authorization layer, keeping the app secure while staying spec-compliant.
 
 ### 🐂 Battle Queue with BullMQ
 
-I used **BullMQ** to handle **battle submissions asynchronously** with **concurrency control**. It integrates easily with NestJS, and its robust event listeners offer visibility into job processing, failures, and retries. Plus, it's built on top of Redis, which aligns with the original spec.
+I used BullMQ to handle battle submissions asynchronously with concurrency control. It integrates easily with NestJS, and it’s robust event listeners offer visibility into job processing, failures, and retries. Plus, it’s built on top of Redis, which aligns with the original spec.
 
 ### 🔥 Extra Juicy Logic: Game Difficulty
 
-I introduced a **Game Difficulty** system that subtly influences **hit chances** during battle, making combat more dynamic and unpredictable. This wasn't in the original scope but adds a nice game design touch.
+I introduced a Game Difficulty system that subtly influences hit chances during battle, making combat more dynamic and unpredictable. This wasn't in the original scope but adds a nice game design touch.
 
 ### 🩺 App Health Check
 
-I implemented a **global health check endpoint** that verifies both:
+I implemented a global health check endpoint that verifies both:
 
-* The **HTTP layer** is responsive.
-* The **database connections** (PostgreSQL and Redis) are alive.
+* The HTTP layer is responsive.
+* The database connections (PostgreSQL and Redis) are alive.
 
 This is vital for production monitoring and uptime guarantees.
 
 ### 📦 Snapshot Storage with JSONB
 
-All the data that “has to be presented to the player” — like detailed battle reports and turn-by-turn logs — is stored in **PostgreSQL `jsonb` columns**:
+All the data that “has to be presented to the player” — like detailed battle reports and turn-by-turn logs — is stored in PostgreSQL `jsonb` columns:
 
 * Battle Snapshot: full metadata of the fight.
 * Turn Snapshot: damage logs, action flow, etc.
 
-This approach kept the schema simple. Although **jsonb fields** make querying and indexing harder (and can hurt performance), they’re fine here because this data is **read-heavy, not query-intensive**, and primarily for **display**.
+This approach kept the schema simple. Although jsonb fields make querying and indexing harder (and can hurt performance), they’re fine here because this data is read-heavy, not query-intensive, and primarily for display.
 
 ### 🌐 CORS and Throttling
 
-I configured **CORS** globally to ensure that the backend safely accepts requests from trusted frontends. This protects the API from unwanted cross-origin calls, especially in browser environments.
+I configured CORS globally to ensure that the backend safely accepts requests from trusted frontends. This protects the API from unwanted cross-origin calls, especially in browser environments.
 
-Global **throttling** limits help mitigate **brute-force attacks**, **spamming**, or **resource exhaustion**, offering basic **rate limiting** out-of-the-box across all routes.
+Global throttling limits help mitigate brute-force attacks, spamming, or resource exhaustion, offering basic rate limiting out-of-the-box across all routes.
 
 ### 🐳 Docker Setup
 
-I added a full **Dockerfile** and **docker-compose.yml** to:
+I added a full `Dockerfile` and `docker-compose.yml` to:
 
-* Quickly bootstrap the project with **PostgreSQL** and **Redis**.
+* Quickly bootstrap the project with PostgreSQL and Redis.
 * Simplify onboarding for reviewers or other developers.
 * Ensure consistency across environments (no “works on my machine” issues).
 
 This makes local development and production deployment easier, faster, and reproducible.
+
+### 🏆 Leaderboard Optimization with Indexing
+
+Displaying a Player Leaderboard means frequently sorting players by their `score` in descending order. To keep this fast and snappy — especially as the player base scales — I added a dedicated PostgreSQL index:
+
+```ts
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "PLAYER_SCORE_DESC_INDEX"
+ON "players" ("score" DESC);
+```
+
+Why the `DESC` sort in the index? Because that’s the exact order used in the leaderboard query. PostgreSQL can then skip a full table scan and jump straight to the sorted list — major win for performance.
+
+Also, notice the use of `CONCURRENTLY`:
+
+- This avoids locking the `players` table during index creation.
+- Since it's a live, critical table, we don’t want to block reads/writes while improving performance.
+
+And because `CREATE INDEX CONCURRENTLY` isn’t allowed inside a transaction, the migration explicitly sets:
+
+```ts
+transaction = false;
+```
+
+To support this kind of fine-grained control, I also configured TypeORM to run each migration in its own transaction by setting:
+
+```ts
+/*
+ - Behavior: Each migration runs in its own transaction
+ - Pros: Migrations can override transaction = false safely (which is needed for
+   the PLAYER_SCORE_DESC_INDEX)
+ - Cons: Partial changes if one migration fails (earlier ones aren’t rolled back)
+*/
+migrationsTransactionMode: "each"
+```
+
+This gives more flexibility — especially for special cases like index creation — while still keeping most migrations safe and isolated.

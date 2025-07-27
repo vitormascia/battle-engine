@@ -1,7 +1,10 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import {
+	MigrationInterface,
+	QueryRunner,
+} from "typeorm";
 
 export class BootstrapApp1753495313655 implements MigrationInterface {
-	name = "BootstrapApp1753495313655";
+	name = this.constructor.name;
 
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		await queryRunner.query(`

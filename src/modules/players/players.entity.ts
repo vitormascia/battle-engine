@@ -2,6 +2,7 @@ import {
 	Check,
 	Column,
 	Entity,
+	Index,
 	OneToMany,
 	PrimaryGeneratedColumn,
 	Relation,
@@ -21,6 +22,11 @@ import { Player } from "./players.type.js";
 	AND "silver" >= 0
 	AND "silver" <= 1000000000
 `)
+/*
+	TypeORM workaround for indexes that were created manually. Read more about it
+	at https://typeorm.io/docs/advanced-topics/indices/#disabling-synchronization
+*/
+@Index("PLAYER_SCORE_DESC_INDEX", { synchronize: false })
 export class PlayerEntity extends AbstractEntity implements Player {
 	@PrimaryGeneratedColumn("uuid")
 	id: string;
@@ -110,7 +116,6 @@ export class PlayerEntity extends AbstractEntity implements Player {
 			💰 Resources
 			===========================
 			🟡 Gold: ${this.gold.toLocaleString()}
-			⚪ Silver: ${this.silver.toLocaleString()}
 			⚪ Silver: ${this.silver.toLocaleString()}
 
 			===========================
