@@ -1,49 +1,36 @@
-import {
-	DEFAULT_APP_PORT,
-	DEFAULT_BATTLE_LOCK_TTL,
-	DEFAULT_CORS_ORIGIN,
-	DEFAULT_IN_GAME_DIFFICULTY,
-	DEFAULT_POSTGRES_PORT,
-	DEFAULT_REDIS_PORT,
-	DEFAULT_THROTTLER_LIMIT,
-	DEFAULT_THROTTLER_TTL,
-} from "../../constants/app.constants.js";
-import { EMPTY_STRING } from "../../constants/symbols.constants.js";
+import { InGameDifficulty } from "../battles/battles.type.js";
+import { AppConfig } from "./app.interfaces.js";
 
-const setConfig = (value?: string, defaultValue: string = EMPTY_STRING): string => {
-	return value ? value : defaultValue;
-};
-
-const configuration = (): Record<string, any> => {
+const configuration = (): AppConfig => {
 	return {
 		app: {
-			port: parseInt(setConfig(process.env.APP_PORT, DEFAULT_APP_PORT)),
-			name: setConfig(process.env.APP_NAME),
-			environment: setConfig(process.env.NODE_ENV),
-			corsOrigin: setConfig(process.env.CORS_ORIGIN, DEFAULT_CORS_ORIGIN),
+			port: +process.env.APP_PORT!,
+			name: process.env.APP_NAME!,
+			environment: process.env.NODE_ENV!,
+			corsOrigin: process.env.CORS_ORIGIN!,
 			throttler: {
-				limit: parseInt(setConfig(process.env.THROTTLER_LIMIT, DEFAULT_THROTTLER_LIMIT)),
-				ttl: parseInt(setConfig(process.env.THROTTLER_TTL, DEFAULT_THROTTLER_TTL)),
+				limit: +process.env.THROTTLER_LIMIT!,
+				ttl: +process.env.THROTTLER_TTL!,
 			},
 		},
 		databases: {
 			postgres: {
-				host: setConfig(process.env.POSTGRES_HOST),
-				port: parseInt(setConfig(process.env.POSTGRES_PORT, DEFAULT_POSTGRES_PORT)),
-				username: setConfig(process.env.POSTGRES_USERNAME),
-				password: setConfig(process.env.POSTGRES_PASSWORD),
-				database: setConfig(process.env.POSTGRES_DATABASE),
+				host: process.env.POSTGRES_HOST!,
+				port: +process.env.POSTGRES_PORT!,
+				username: process.env.POSTGRES_USERNAME!,
+				password: process.env.POSTGRES_PASSWORD!,
+				database: process.env.POSTGRES_DATABASE!,
 			},
 			redis: {
-				host: setConfig(process.env.REDIS_HOST),
-				port: parseInt(setConfig(process.env.REDIS_PORT, DEFAULT_REDIS_PORT)),
+				host: process.env.REDIS_HOST!,
+				port: +process.env.REDIS_PORT!,
 				ttls: {
-					battleLock: parseInt(setConfig(process.env.BATTLE_LOCK_TTL, DEFAULT_BATTLE_LOCK_TTL)),
+					battleLock: +process.env.BATTLE_LOCK_TTL!,
 				},
 			},
 		},
 		inGame: {
-			difficulty: setConfig(process.env.IN_GAME_DIFFICULTY, DEFAULT_IN_GAME_DIFFICULTY),
+			difficulty: process.env.IN_GAME_DIFFICULTY as InGameDifficulty,
 		},
 	};
 };

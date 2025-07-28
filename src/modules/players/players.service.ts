@@ -3,7 +3,7 @@ import {
 	Logger,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { EntityManager, Repository } from "typeorm";
 
 import { CreatePlayerBodyDto } from "./players.dtos.js";
 import { PlayerEntity } from "./players.entity.js";
@@ -27,8 +27,14 @@ export class PlayersService {
 		return player;
 	}
 
-	public async incrementScore(playerId: string, score: number): Promise<void> {
-		await this.playersRepository.increment({ id: playerId }, "score", score);
+	public async incrementScore(
+		playerId: string,
+		score: number,
+		entityManager: EntityManager,
+	): Promise<void> {
+		const playersRepository = entityManager.getRepository(PlayerEntity);
+
+		await playersRepository.increment({ id: playerId }, "score", score);
 	}
 
 	public async awardVictoryLoot(
@@ -36,12 +42,15 @@ export class PlayersService {
 		loser: Player,
 		goldLoot: number,
 		silverLoot: number,
+		entityManager: EntityManager,
 	): Promise<void> {
-		await this.playersRepository.decrement({ id: loser.id }, "gold", goldLoot);
-		await this.playersRepository.decrement({ id: loser.id }, "silver", silverLoot);
+		const playersRepository = entityManager.getRepository(PlayerEntity);
 
-		await this.playersRepository.increment({ id: winner.id }, "gold", goldLoot);
-		await this.playersRepository.increment({ id: winner.id }, "silver", silverLoot);
+		await playersRepository.decrement({ id: loser.id }, "gold", goldLoot);
+		await playersRepository.decrement({ id: loser.id }, "silver", silverLoot);
+
+		await playersRepository.increment({ id: winner.id }, "gold", goldLoot);
+		await playersRepository.increment({ id: winner.id }, "silver", silverLoot);
 	}
 
 	public async getLeaderboard(): Promise<Leaderboard> {

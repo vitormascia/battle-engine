@@ -40,6 +40,6 @@ export type CreateTurn = Pick<
 	| **Normal**    | `1.0`          | Linear, neutral balance (default)                         |
 	| **Medium**    | `1.1`          | Slightly favors stronger stat more                        |
 	| **Hard**      | `1.3`          | Makes defense more impactful, steeper dropoff             |
-	| **Very Hard** | `1.5+`         | Small stat gaps = massive hit/miss difference             |
+	| **Very Hard** | `1.5`          | Small stat gaps = massive hit/miss difference             |
 */
 export type InGameDifficulty = "VERY_EASY" | "EASY" | "NORMAL" | "MEDIUM" | "HARD" | "VERY_HARD"

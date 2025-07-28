@@ -23,7 +23,15 @@ const BattlesQueueDynamicModule = BullModule.registerQueue({
 		backoff: {
 			type: "exponential",
 			delay: ONE_SECOND_IN_MILLISECONDS / 2,
-			/* 30% jitter to avoid retry spikes */
+			/*
+				Jitter introduces random variance to the retry delay. Instead of all retries
+				happening at exact intervals (which can overwhelm the system), it adds noise
+				to spread them out. This is crucial in systems with high concurrency + backoff,
+				preventing the so-called [Thundering herd problem](https://en.wikipedia.org/wiki/Thundering_herd_problem)
+
+				TL;DR
+				Adds 30% randomness to retry delays to prevent retry storms and balance load
+			*/
 			jitter: 0.3,
 		},
 		removeOnComplete: {
@@ -53,7 +61,6 @@ const BattlesQueueDynamicModule = BullModule.registerQueue({
 	],
 	exports: [
 		TypeOrmModule,
-		BattlesQueueDynamicModule,
 		BattlesService,
 		BattleLocksService,
 	],

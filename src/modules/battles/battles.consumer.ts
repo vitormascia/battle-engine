@@ -7,6 +7,9 @@ import {
 	Injectable,
 	Logger,
 } from "@nestjs/common";
+import { InjectEntityManager } from "@nestjs/typeorm";
+import { EntityManager } from "typeorm";
+import { IsolationLevel } from "typeorm/driver/types/IsolationLevel.js";
 
 import { QueueName } from "../app/queues.enum.js";
 import { PlayersService } from "../players/players.service.js";
@@ -24,6 +27,8 @@ export class BattlesConsumer extends WorkerHost {
 	private readonly logger = new Logger(this.constructor.name);
 
 	constructor(
+		@InjectEntityManager()
+		private readonly entityManager: EntityManager,
 		private readonly battlesService: BattlesService,
 		private readonly battleLocksService: BattleLocksService,
 		private readonly playersService: PlayersService,
@@ -77,32 +82,55 @@ export class BattlesConsumer extends WorkerHost {
 			opponentId,
 		} = job.data;
 
-		const battle = await this.battlesService.create({
-			challengerId,
-			opponentId,
-		});
+		const isolationLevel: IsolationLevel = "READ COMMITTED";
 
-		const { winner, loser } = await this.battlesService.battle(
-			challengerId,
-			opponentId,
-			battle.id,
+		await this.entityManager.transaction(
+			isolationLevel,
+			async (transactionalEntityManager): Promise<void> => {
+				let battle = await this.battlesService.create(
+					{
+						challengerId,
+						opponentId,
+					},
+					transactionalEntityManager,
+				);
+
+				const { winner, loser } = await this.battlesService.battle(
+					battle.challengerId!,
+					battle.opponentId!,
+					battle.id,
+					transactionalEntityManager,
+				);
+
+				const { battleSnapshot } = await this.battlesService.lootResources(
+					winner,
+					loser,
+					transactionalEntityManager,
+				);
+
+				battle = await this.battlesService.update(
+					battle.id,
+					{
+						winnerId: winner.id,
+						loserId: loser.id,
+						battleSnapshot,
+					},
+					transactionalEntityManager,
+				);
+
+				/*
+					Player score in the battle is represented by the Loot, where
+					Loot = Gold Loot + Silver Loot
+				*/
+				const score = battle.battleSnapshot!.loot;
+
+				await this.playersService.incrementScore(
+					battle.winnerId!,
+					score,
+					transactionalEntityManager,
+				);
+			},
 		);
-
-		const { battleSnapshot } = await this.battlesService.lootResources(
-			winner,
-			loser,
-		);
-
-		await this.battlesService.update(battle.id, {
-			winnerId: winner.id,
-			loserId: loser.id,
-			battleSnapshot,
-		});
-
-		/* Player score in the battle is represented by the Loot (Gold Loot + Silver Loot) */
-		const score = battleSnapshot.loot;
-
-		await this.playersService.incrementScore(winner.id, score);
 	}
 
 	@OnWorkerEvent("active")

@@ -26,6 +26,7 @@ import { HealthModule } from "../health_check/health_check.module.js";
 import { PlayersModule } from "../players/players.module.js";
 import { RedisModule } from "../redis/redis.module.js";
 import configuration from "./app.configuration.js";
+import { AppConfig } from "./app.interfaces.js";
 
 @Module({
 	imports: [
@@ -39,11 +40,11 @@ import configuration from "./app.configuration.js";
 		ThrottlerModule.forRootAsync({
 			imports: [ConfigModule],
 			inject: [ConfigService],
-			useFactory: (config: ConfigService) => ({
+			useFactory: (config: ConfigService<AppConfig, true>) => ({
 				throttlers: [
 					{
-						limit: config.get<number>("app.throttler.limit")!,
-						ttl: seconds(config.get<number>("app.throttler.ttl")!),
+						limit: config.get("app.throttler.limit", { infer: true }),
+						ttl: seconds(config.get("app.throttler.ttl", { infer: true })),
 					},
 				],
 			}),
@@ -51,13 +52,13 @@ import configuration from "./app.configuration.js";
 		TypeOrmModule.forRootAsync({
 			imports: [ConfigModule],
 			inject: [ConfigService],
-			useFactory: (config: ConfigService) => ({
+			useFactory: (config: ConfigService<AppConfig, true>) => ({
 				type: "postgres",
-				host: config.get("databases.postgres.host"),
-				port: config.get<number>("databases.postgres.port"),
-				username: config.get("databases.postgres.username"),
-				password: config.get("databases.postgres.password"),
-				database: config.get("databases.postgres.database"),
+				host: config.get("databases.postgres.host", { infer: true }),
+				port: config.get("databases.postgres.port", { infer: true }),
+				username: config.get("databases.postgres.username", { infer: true }),
+				password: config.get("databases.postgres.password", { infer: true }),
+				database: config.get("databases.postgres.database", { infer: true }),
 				entities: [
 					path.join(process.cwd(), "build/modules/**/*.entity.js"),
 					path.join(process.cwd(), "build/modules/**/entities/*.entity.js"),
@@ -75,7 +76,7 @@ import configuration from "./app.configuration.js";
 					- Cons: Partial changes if one migration fails (earlier ones aren’t rolled back)
 				*/
 				migrationsTransactionMode: "each",
-				synchronize: !(config.get("app.environment") === "production"),
+				synchronize: !(config.get("app.environment", { infer: true }) === "production"),
 				retryAttempts: 10,
 				retryDelay: ONE_SECOND_IN_MILLISECONDS * 3,
 				autoLoadEntities: false,
@@ -86,10 +87,10 @@ import configuration from "./app.configuration.js";
 		BullModule.forRootAsync({
 			imports: [ConfigModule],
 			inject: [ConfigService],
-			useFactory: (config: ConfigService) => ({
+			useFactory: (config: ConfigService<AppConfig, true>) => ({
 				connection: {
-					host: config.get("databases.redis.host"),
-					port: config.get<number>("databases.redis.port"),
+					host: config.get("databases.redis.host", { infer: true }),
+					port: config.get("databases.redis.port", { infer: true }),
 				},
 			}),
 		}),

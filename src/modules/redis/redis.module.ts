@@ -5,17 +5,21 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { Redis } from "ioredis";
 
+import { AppConfig } from "../app/app.interfaces.js";
+
 @Module({
+	imports: [],
+	controllers: [],
 	providers: [
 		{
 			provide: "REDIS_CLIENT",
 			inject: [ConfigService],
-			useFactory: (config: ConfigService): Redis => {
+			useFactory: (config: ConfigService<AppConfig, true>): Redis => {
 				const logger = new Logger("RedisClient");
 
 				const redis = new Redis({
-					host: config.get("databases.redis.host"),
-					port: config.get<number>("databases.redis.port"),
+					host: config.get("databases.redis.host", { infer: true }),
+					port: config.get("databases.redis.port", { infer: true }),
 					lazyConnect: true,
 				});
 

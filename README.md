@@ -210,13 +210,13 @@ Since the app doesn’t feature a traditional sign-up/sign-in system, I introduc
 
 The system uses two enums to define roles:
 
-- `PlayerRole`: `Player`, `PremiumPlayer`, `ClanLeader`
-- `GameMasterRole`: `Moderator`, `EventManager`, `SupportAgent`
+* `PlayerRole`: `Player`, `PremiumPlayer`, `ClanLeader`
+* `GameMasterRole`: `Moderator`, `EventManager`, `SupportAgent`
 
 For this implementation:
 
-- `GameMasterRole.Moderator` — Can create players.
-- `PlayerRole.Player` — Can initiate battles.
+* `GameMasterRole.Moderator` — Can create players.
+* `PlayerRole.Player` — Can initiate battles.
 
 This setup allows for future expansion, where premium players or clan leaders might have special privileges. Role enforcement is handled through custom decorators and guards, ensuring only users with valid roles can access protected routes.
 
@@ -277,8 +277,8 @@ Why the `DESC` sort in the index? Because that’s the exact order used in the l
 
 Also, notice the use of `CONCURRENTLY`:
 
-- This avoids locking the `players` table during index creation.
-- Since it's a live, critical table, we don’t want to block reads/writes while improving performance.
+* This avoids locking the `players` table during index creation.
+* Since it's a live, critical table, we don’t want to block reads/writes while improving performance.
 
 And because `CREATE INDEX CONCURRENTLY` isn’t allowed inside a transaction, the migration explicitly sets:
 
@@ -299,3 +299,24 @@ migrationsTransactionMode: "each"
 ```
 
 This gives more flexibility — especially for special cases like index creation — while still keeping most migrations safe and isolated.
+
+### 🔄 Transactional Battle Processing
+
+Battles are a multi-step, state-changing operation involving several entities:
+
+* Creating the battle
+* Resolving a winner & loser
+* Applying loot and saving a battle snapshot
+* Updating the battle record
+
+To ensure consistency and prevent partial writes (e.g., a winner is chosen but the battle wasn’t saved), I wrapped all of the code related to the process of a battle in a single database transaction.
+
+I explicitly set the `READ COMMITTED` isolation level, which:
+
+* Prevents dirty reads
+* Ensures a good balance of consistency and performance
+* Aligns with PostgreSQL default and production-ready settings
+
+Even though the battle resolution logic is broken into separate service methods, they all share the same transactional entity manager, so it’s one atomic operation from start to finish.
+
+This setup ensures that battles are resolved reliably, consistently and without any surprise race conditions or partial states.

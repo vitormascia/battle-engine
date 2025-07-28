@@ -13,6 +13,7 @@ import {
 
 import { COMMA } from "./constants/symbols.constants.js";
 import { HttpExceptionFilter } from "./filters/http_exception.filter.js";
+import { AppConfig } from "./modules/app/app.interfaces.js";
 import { AppModule } from "./modules/app/app.module.js";
 import { TrimPipe } from "./pipes/trim.pipe.js";
 
@@ -46,12 +47,12 @@ async function bootstrap(): Promise<void> {
 	}));
 	app.useGlobalPipes(new TrimPipe());
 
-	const configService = app.get(ConfigService);
+	const configService = app.get<ConfigService<AppConfig, true>>(ConfigService);
 
-	const corsOrigin = configService.get<string>("app.corsOrigin");
+	const corsOrigin = configService.get("app.corsOrigin", { infer: true });
 
 	app.enableCors({
-		origin: corsOrigin?.split(COMMA) || [],
+		origin: corsOrigin.split(COMMA),
 		methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 		credentials: true,
 	});
@@ -59,31 +60,31 @@ async function bootstrap(): Promise<void> {
 	await app.register(helmet);
 
 	const appConfig = {
-		name: configService.get<string>("app.name")!,
-		port: configService.get<number>("app.port")!,
-		environment: configService.get<string>("app.environment")!,
+		name: configService.get("app.name", { infer: true }),
+		port: configService.get("app.port", { infer: true }),
+		environment: configService.get("app.environment", { infer: true }),
 		corsOrigin,
 		throtller: {
-			limit: configService.get<number>("app.throttler.limit"),
-			ttl: configService.get<number>("app.throttler.ttl"),
+			limit: configService.get("app.throttler.limit", { infer: true }),
+			ttl: configService.get("app.throttler.ttl", { infer: true }),
 		},
 	};
 	const postgresConfig = {
-		host: configService.get<string>("databases.postgres.host"),
-		port: configService.get<string>("databases.postgres.port"),
-		username: configService.get<string>("databases.postgres.username"),
-		password: configService.get<string>("databases.postgres.password"),
-		database: configService.get<string>("databases.postgres.database"),
+		host: configService.get("databases.postgres.host", { infer: true }),
+		port: configService.get("databases.postgres.port", { infer: true }),
+		username: configService.get("databases.postgres.username", { infer: true }),
+		password: configService.get("databases.postgres.password", { infer: true }),
+		database: configService.get("databases.postgres.database", { infer: true }),
 	};
 	const redisConfig = {
-		host: configService.get<string>("databases.redis.host"),
-		port: configService.get<string>("databases.redis.port"),
+		host: configService.get("databases.redis.host", { infer: true }),
+		port: configService.get("databases.redis.port", { infer: true }),
 		ttls: {
-			battleLocks: configService.get<number>("databases.redis.ttls.battleLock"),
+			battleLocks: configService.get("databases.redis.ttls.battleLock", { infer: true }),
 		},
 	};
 	const inGame = {
-		difficulty: configService.get<string>("inGame.difficulty"),
+		difficulty: configService.get("inGame.difficulty", { infer: true }),
 	};
 
 	const logger = new Logger();

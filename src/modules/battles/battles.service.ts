@@ -8,17 +8,18 @@ import {
 	UnprocessableEntityException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { InjectRepository } from "@nestjs/typeorm";
+import { InjectEntityManager } from "@nestjs/typeorm";
 import BigNumber from "bignumber.js";
 import { Queue } from "bullmq";
 import _ from "lodash";
 import {
+	EntityManager,
 	FindOneOptions,
 	FindOptionsSelect,
-	Repository,
 } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 
+import { AppConfig } from "../app/app.interfaces.js";
 import { QueueName } from "../app/queues.enum.js";
 import { PlayerEntity } from "../players/players.entity.js";
 import { PlayersService } from "../players/players.service.js";
@@ -50,27 +51,25 @@ export class BattlesService {
 	private readonly inGameDifficulty: InGameDifficulty;
 
 	constructor(
-		@InjectRepository(PlayerEntity)
-		private readonly playersRepository: Repository<PlayerEntity>,
-		@InjectRepository(BattleEntity)
-		private readonly battlesRepository: Repository<BattleEntity>,
-		@InjectRepository(TurnEntity)
-		private readonly turnsRepository: Repository<TurnEntity>,
+		@InjectEntityManager()
+		private readonly entityManager: EntityManager,
 		@InjectQueue(QueueName.Battles)
 		private readonly battlesQueue: Queue<BattleJobData>,
-		private readonly configService: ConfigService,
+		private readonly configService: ConfigService<AppConfig, true>,
 		private readonly battleLocksService: BattleLocksService,
 		private readonly playersService: PlayersService,
 	) {
-		this.inGameDifficulty = this.configService.get<InGameDifficulty>("inGame.difficulty")!;
+		this.inGameDifficulty = this.configService.get("inGame.difficulty", { infer: true });
 	}
 
-	public async create(createBattle: CreateBattle): Promise<Battle> {
-		const insertBattleResult = await this.battlesRepository.insert(createBattle);
+	public async create(createBattle: CreateBattle, entityManager: EntityManager): Promise<Battle> {
+		const battlesRepository = entityManager.getRepository(BattleEntity);
+
+		const insertBattleResult = await battlesRepository.insert(createBattle);
 
 		const battleId: string = insertBattleResult.identifiers[0].id;
 
-		const battle = await this.battlesRepository.findOneBy({
+		const battle = await battlesRepository.findOneBy({
 			id: battleId,
 		});
 
@@ -86,10 +85,12 @@ export class BattlesService {
 		return battle;
 	}
 
-	public async update(battleId: string, updateBattle: UpdateBattle): Promise<Battle> {
-		await this.battlesRepository.update(battleId, updateBattle);
+	public async update(battleId: string, updateBattle: UpdateBattle, entityManager: EntityManager): Promise<Battle> {
+		const battlesRepository = entityManager.getRepository(BattleEntity);
 
-		const battle = await this.battlesRepository.findOneBy({
+		await battlesRepository.update(battleId, updateBattle);
+
+		const battle = await battlesRepository.findOneBy({
 			id: battleId,
 		});
 
@@ -105,12 +106,14 @@ export class BattlesService {
 		return battle;
 	}
 
-	private async createTurn(createTurn: CreateTurn): Promise<Turn> {
-		const insertTurnResult = await this.turnsRepository.insert(createTurn);
+	private async createTurn(createTurn: CreateTurn, entityManager: EntityManager): Promise<Turn> {
+		const turnsRepository = entityManager.getRepository(TurnEntity);
+
+		const insertTurnResult = await turnsRepository.insert(createTurn);
 
 		const turnId: string = insertTurnResult.identifiers[0].id;
 
-		const turn = await this.turnsRepository.findOneBy({
+		const turn = await turnsRepository.findOneBy({
 			id: turnId,
 		});
 
@@ -130,15 +133,20 @@ export class BattlesService {
 		challengerId: string,
 		opponentId: string,
 		select?: FindOptionsSelect<PlayerEntity>,
+		entityManager?: EntityManager,
 	): Promise<{
 		challenger: Player,
 		opponent: Player,
 	}> {
+		entityManager ??= this.entityManager;
+
 		this.logger.debug("GET_BATTLE_PLAYERS::PAYLOAD", {
 			challengerId,
 			opponentId,
 			select,
 		});
+
+		const playersRepository = entityManager.getRepository(PlayerEntity);
 
 		const findChallengerOptions: FindOneOptions<PlayerEntity> = select ? {
 			select,
@@ -147,7 +155,7 @@ export class BattlesService {
 			where: { id: challengerId },
 		};
 
-		const challenger: Player | null = await this.playersRepository.findOne(findChallengerOptions);
+		const challenger: Player | null = await playersRepository.findOne(findChallengerOptions);
 
 		if (!challenger) {
 			throw new NotFoundException("Challenger Player not found");
@@ -162,7 +170,7 @@ export class BattlesService {
 			where: { id: opponentId },
 		};
 
-		const opponent: Player | null = await this.playersRepository.findOne(findOpponentOptions);
+		const opponent: Player | null = await playersRepository.findOne(findOpponentOptions);
 
 		if (!opponent) {
 			throw new NotFoundException("Opponent Player not found");
@@ -351,7 +359,12 @@ export class BattlesService {
 		return isHit;
 	}
 
-	public async battle(challengerId: string, opponentId: string, battleId: string): Promise<BattleResult> {
+	public async battle(
+		challengerId: string,
+		opponentId: string,
+		battleId: string,
+		entityManager: EntityManager,
+	): Promise<BattleResult> {
 		this.logger.debug("RUN_BATTLE_LOOP::PAYLOAD", {
 			challengerId,
 			opponentId,
@@ -369,6 +382,7 @@ export class BattlesService {
 				defense: true,
 				hitPoints: true,
 			},
+			entityManager,
 		);
 
 		let attacker: PlayerInBattle = {
@@ -438,12 +452,15 @@ export class BattlesService {
 			turnSnapshot.attacker = attacker;
 			turnSnapshot.defender = defender;
 
-			await this.createTurn({
-				index: turnIndex,
-				battleId,
-				/* Guaranteed to be fully set (not Partial<TurnSnapshot>) */
-				turnSnapshot: turnSnapshot as TurnSnapshot,
-			});
+			await this.createTurn(
+				{
+					index: turnIndex,
+					battleId,
+					/* Guaranteed to be fully set (not Partial<TurnSnapshot>) */
+					turnSnapshot: turnSnapshot as TurnSnapshot,
+				},
+				entityManager,
+			);
 
 			/* Guaranteed to be fully set (not Partial<TurnSnapshot>) */
 			turnsSnapshot.push(turnSnapshot as TurnSnapshot);
@@ -494,6 +511,7 @@ export class BattlesService {
 	public async lootResources(
 		winner: Player,
 		loser: Player,
+		entityManager: EntityManager,
 	): Promise<LootResourcesResult> {
 		this.logger.debug("LOOT_RESOURCES::PAYLOAD", {
 			winner,
@@ -508,7 +526,13 @@ export class BattlesService {
 			.integerValue(BigNumber.ROUND_CEIL)
 			.toNumber();
 
-		await this.playersService.awardVictoryLoot(winner, loser, goldLoot, silverLoot);
+		await this.playersService.awardVictoryLoot(
+			winner,
+			loser,
+			goldLoot,
+			silverLoot,
+			entityManager,
+		);
 
 		this.logger.debug("LOOT_RESOURCES::RESULT", {
 			winner,

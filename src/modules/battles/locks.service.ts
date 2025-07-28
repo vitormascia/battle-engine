@@ -6,6 +6,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { Redis } from "ioredis";
 
+import { AppConfig } from "../app/app.interfaces.js";
 import { LockPlayersForBattleResult } from "./battles.interface.js";
 
 @Injectable()
@@ -16,9 +17,9 @@ export class BattleLocksService {
 	constructor(
 		@Inject("REDIS_CLIENT")
 		private readonly redisClient: Redis,
-		private readonly configService: ConfigService,
+		private readonly configService: ConfigService<AppConfig, true>,
 	) {
-		this.battleLockTtl = this.configService.get<number>("databases.redis.ttls.battleLock")!;
+		this.battleLockTtl = this.configService.get("databases.redis.ttls.battleLock", { infer: true });
 	}
 
 	private async lockPlayersForBattle(
