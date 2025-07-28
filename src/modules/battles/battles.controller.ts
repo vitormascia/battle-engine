@@ -9,8 +9,8 @@ import {
 import { validate as isUUID } from "uuid";
 
 import { Roles } from "../../decorators/roles.decorator.js";
+import { PlayerRole } from "../../guards/@types/roles.enum.js";
 import { PlayerRolesGuard } from "../../guards/player_roles.guard.js";
-import { PlayerRole } from "../../guards/roles.enum.js";
 import { SubmitBattleBodyDto } from "./battles.dtos.js";
 import { BattlesService } from "./battles.service.js";
 

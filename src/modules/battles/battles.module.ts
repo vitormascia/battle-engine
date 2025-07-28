@@ -6,7 +6,7 @@ import {
 	ONE_DAY_IN_SECONDS,
 	ONE_SECOND_IN_MILLISECONDS,
 } from "../../constants/time.constants.js";
-import { QueueName } from "../app/queues.enum.js";
+import { QueueName } from "../app/@types/queues.enum.js";
 import { PlayersModule } from "../players/players.module.js";
 import { RedisModule } from "../redis/redis.module.js";
 import { BattlesConsumer } from "./battles.consumer.js";

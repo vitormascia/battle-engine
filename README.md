@@ -54,31 +54,31 @@ IN_GAME_DIFFICULTY="NORMAL"
 
 `2.` Set the correct Node.js version via the `.nvmrc` file
 
-```
+```sh
 nvm use
 ```
 
 `3.` Build the app
 
-```
+```sh
 npm run build
 ```
 
 `4.` Rise the containers
 
-```
+```sh
 docker compose up -d
 ```
 
 `5.` Optionally, if you wanna bring the containers down
 
-```
+```sh
 docker compose down -v
 ```
 
 `6.` Run the app on watch mode (don’t worry, migrations auto run on every application launch)
 
-```
+```sh
 npm run start:dev
 ```
 
@@ -320,3 +320,23 @@ I explicitly set the `READ COMMITTED` isolation level, which:
 Even though the battle resolution logic is broken into separate service methods, they all share the same transactional entity manager, so it’s one atomic operation from start to finish.
 
 This setup ensures that battles are resolved reliably, consistently and without any surprise race conditions or partial states.
+
+## ⏳ Things I Would've Done with More Time
+
+There’s always room for more polish. If time allowed, here’s what I would have added:
+
+* **Swagger (OpenAPI)**
+
+  Easily document and test all endpoints via [`@nestjs/swagger`](https://docs.nestjs.com/openapi/introduction). I wanted the backend to be self-explorable.
+
+* **Request-Scoped Consumers**
+
+  [Request-scoped consumers](https://docs.nestjs.com/techniques/queues#request-scoped-consumers) along with [Provider scope](https://docs.nestjs.com/fundamentals/injection-scopes#provider-scope), are well-suited for a battle engine because each battle job can be treated as an isolated request with its own injected context (e.g., battle metadata, logging scope, DB session). This ensures clean separation of concurrent jobs and enables more granular observability. Also, a little bit of an overkill for a take-home project.
+
+* **Tests (Jest)**
+
+  I had everything set up (Jest, scripts, configs), but ran out of time for full unit and integration coverage. Still, the architecture is test-friendly and ready to go!
+
+* **Queue Management Endpoints**
+
+  I would use [Queue management](https://docs.nestjs.com/techniques/queues#queue-management) to expose a dedicated set of queue management endpoints (e.g., pause, resume, list jobs by status, edit jobs, etc) accessible only by GameMasters. These endpoints would give operational control over the battle queue for monitoring or manual intervention.

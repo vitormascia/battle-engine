@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { FastifyReply } from "fastify";
 
-import { FilterRequest } from "./filter.interface.js";
+import { FilterRequest } from "./@types/filter.interface.js";
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {

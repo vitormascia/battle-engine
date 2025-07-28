@@ -1,4 +1,4 @@
-import { GameMasterRole } from "../../guards/roles.enum.js";
+import { GameMasterRole } from "../../../guards/@types/roles.enum.js";
 
 export interface GameMaster {
 	id: string;

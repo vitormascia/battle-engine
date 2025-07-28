@@ -19,12 +19,11 @@ import {
 } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 
-import { AppConfig } from "../app/app.interfaces.js";
-import { QueueName } from "../app/queues.enum.js";
+import { AppConfig } from "../app/@types/app.interfaces.js";
+import { QueueName } from "../app/@types/queues.enum.js";
+import { Player } from "../players/@types/players.type.js";
 import { PlayerEntity } from "../players/players.entity.js";
 import { PlayersService } from "../players/players.service.js";
-import { Player } from "../players/players.type.js";
-import { BattleEntity } from "./battles.entity.js";
 import {
 	BattleJobData,
 	BattleOutcome,
@@ -32,7 +31,7 @@ import {
 	BattleSnapshot,
 	LootResourcesResult,
 	TurnSnapshot,
-} from "./battles.interface.js";
+} from "./@types/battles.interface.js";
 import {
 	Battle,
 	CreateBattle,
@@ -41,7 +40,8 @@ import {
 	PlayerInBattle,
 	Turn,
 	UpdateBattle,
-} from "./battles.type.js";
+} from "./@types/battles.type.js";
+import { BattleEntity } from "./battles.entity.js";
 import { BattleLocksService } from "./locks.service.js";
 import { TurnEntity } from "./turns.entity.js";
 

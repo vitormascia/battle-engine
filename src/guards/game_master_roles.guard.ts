@@ -12,8 +12,8 @@ import { validate as isUUID } from "uuid";
 
 import { ROLES_KEY } from "../decorators/roles.decorator.js";
 import { GameMasterEntity } from "../modules/game_masters/game_masters.entity.js";
-import { GuardRequest } from "./guard.interface.js";
-import { GameMasterRole } from "./roles.enum.js";
+import { GuardRequest } from "./@types/guard.interface.js";
+import { GameMasterRole } from "./@types/roles.enum.js";
 
 @Injectable()
 export class GameMasterRolesGuard implements CanActivate {

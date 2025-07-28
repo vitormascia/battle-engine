@@ -1,4 +1,4 @@
-import { Player } from "../players/players.type.js";
+import { Player } from "../../players/@types/players.type.js";
 
 export interface TurnSnapshot {
 	/* Start Data */

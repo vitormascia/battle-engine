@@ -6,8 +6,8 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { Redis } from "ioredis";
 
-import { AppConfig } from "../app/app.interfaces.js";
-import { LockPlayersForBattleResult } from "./battles.interface.js";
+import { AppConfig } from "../app/@types/app.interfaces.js";
+import { LockPlayersForBattleResult } from "./@types/battles.interface.js";
 
 @Injectable()
 export class BattleLocksService {

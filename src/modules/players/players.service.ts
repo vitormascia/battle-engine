@@ -5,10 +5,10 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { EntityManager, Repository } from "typeorm";
 
+import { Leaderboard } from "./@types/players.interface.js";
+import { Player } from "./@types/players.type.js";
 import { CreatePlayerBodyDto } from "./players.dtos.js";
 import { PlayerEntity } from "./players.entity.js";
-import { Leaderboard } from "./players.interface.js";
-import { Player } from "./players.type.js";
 
 @Injectable()
 export class PlayersService {

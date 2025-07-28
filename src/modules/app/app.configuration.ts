@@ -1,5 +1,5 @@
-import { InGameDifficulty } from "../battles/battles.type.js";
-import { AppConfig } from "./app.interfaces.js";
+import { InGameDifficulty } from "../battles/@types/battles.type.js";
+import { AppConfig } from "./@types/app.interfaces.js";
 
 const configuration = (): AppConfig => {
 	return {

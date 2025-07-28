@@ -5,9 +5,9 @@ import {
 	Unique,
 } from "typeorm";
 
-import { GameMasterRole } from "../../guards/roles.enum.js";
+import { GameMasterRole } from "../../guards/@types/roles.enum.js";
 import { AbstractEntity } from "../app/base.entity.js";
-import { GameMaster } from "./game_masters.interface.js";
+import { GameMaster } from "./@types/game_masters.interface.js";
 
 @Entity("game_masters")
 @Unique(["name"])

@@ -1,4 +1,4 @@
-import { InGameDifficulty } from "../battles/battles.type.js";
+import { InGameDifficulty } from "../../battles/@types/battles.type.js";
 
 export interface AppConfig {
 	app: {

@@ -11,10 +11,10 @@ import { InjectEntityManager } from "@nestjs/typeorm";
 import { EntityManager } from "typeorm";
 import { IsolationLevel } from "typeorm/driver/types/IsolationLevel.js";
 
-import { QueueName } from "../app/queues.enum.js";
+import { QueueName } from "../app/@types/queues.enum.js";
 import { PlayersService } from "../players/players.service.js";
+import { BattleJob } from "./@types/battles.type.js";
 import { BattlesService } from "./battles.service.js";
-import { BattleJob } from "./battles.type.js";
 import { BattleLocksService } from "./locks.service.js";
 
 /*

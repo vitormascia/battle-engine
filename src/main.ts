@@ -13,7 +13,7 @@ import {
 
 import { COMMA } from "./constants/symbols.constants.js";
 import { HttpExceptionFilter } from "./filters/http_exception.filter.js";
-import { AppConfig } from "./modules/app/app.interfaces.js";
+import { AppConfig } from "./modules/app/@types/app.interfaces.js";
 import { AppModule } from "./modules/app/app.module.js";
 import { TrimPipe } from "./pipes/trim.pipe.js";
 

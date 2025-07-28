@@ -7,13 +7,13 @@ import {
 } from "@nestjs/common";
 
 import { Roles } from "../../decorators/roles.decorator.js";
+import { GameMasterRole, PlayerRole } from "../../guards/@types/roles.enum.js";
 import { GameMasterRolesGuard } from "../../guards/game_master_roles.guard.js";
 import { PlayerRolesGuard } from "../../guards/player_roles.guard.js";
-import { GameMasterRole, PlayerRole } from "../../guards/roles.enum.js";
+import { Leaderboard } from "./@types/players.interface.js";
+import { Player } from "./@types/players.type.js";
 import { CreatePlayerBodyDto } from "./players.dtos.js";
-import { Leaderboard } from "./players.interface.js";
 import { PlayersService } from "./players.service.js";
-import { Player } from "./players.type.js";
 
 @Controller("/players")
 export class PlayersController {

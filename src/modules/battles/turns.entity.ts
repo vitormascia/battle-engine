@@ -10,9 +10,9 @@ import {
 } from "typeorm";
 
 import { AbstractEntity } from "../app/base.entity.js";
+import { TurnSnapshot } from "./@types/battles.interface.js";
+import { Turn } from "./@types/battles.type.js";
 import { BattleEntity } from "./battles.entity.js";
-import { TurnSnapshot } from "./battles.interface.js";
-import { Turn } from "./battles.type.js";
 
 @Entity("turns")
 @Unique(["index", "battleId"])

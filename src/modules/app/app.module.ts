@@ -18,15 +18,15 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import path from "path";
 
 import { ONE_SECOND_IN_MILLISECONDS } from "../../constants/time.constants.js";
-import { PlayerInterceptor } from "../../interceptors/player.interceptor.js";
+import { TelemetryInterceptor } from "../../interceptors/telemetry.interceptor.js";
 import { LoggerMiddleware } from "../../middlewares/logger.middleware.js";
 import { BattlesModule } from "../battles/battles.module.js";
 import { GameMastersModule } from "../game_masters/game_masters.module.js";
 import { HealthModule } from "../health_check/health_check.module.js";
 import { PlayersModule } from "../players/players.module.js";
 import { RedisModule } from "../redis/redis.module.js";
+import { AppConfig } from "./@types/app.interfaces.js";
 import configuration from "./app.configuration.js";
-import { AppConfig } from "./app.interfaces.js";
 
 @Module({
 	imports: [
@@ -104,7 +104,7 @@ import { AppConfig } from "./app.interfaces.js";
 	providers: [
 		{
 			provide: APP_INTERCEPTOR,
-			useClass: PlayerInterceptor,
+			useClass: TelemetryInterceptor,
 		},
 		{
 			provide: APP_GUARD,

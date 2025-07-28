@@ -11,8 +11,8 @@ import {
 
 import { AbstractEntity } from "../app/base.entity.js";
 import { PlayerEntity } from "../players/players.entity.js";
-import { BattleSnapshot } from "./battles.interface.js";
-import { Battle } from "./battles.type.js";
+import { BattleSnapshot } from "./@types/battles.interface.js";
+import { Battle } from "./@types/battles.type.js";
 import { TurnEntity } from "./turns.entity.js";
 
 @Entity("battles")

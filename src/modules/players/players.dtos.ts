@@ -12,7 +12,7 @@ import {
 	MinLength,
 } from "class-validator";
 
-import { PlayerRole } from "../../guards/roles.enum.js";
+import { PlayerRole } from "../../guards/@types/roles.enum.js";
 
 export class CreatePlayerBodyDto {
 	@MaxLength(20)

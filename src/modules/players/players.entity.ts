@@ -9,10 +9,10 @@ import {
 	Unique,
 } from "typeorm";
 
-import { PlayerRole } from "../../guards/roles.enum.js";
+import { PlayerRole } from "../../guards/@types/roles.enum.js";
 import { AbstractEntity } from "../app/base.entity.js";
 import { BattleEntity } from "../battles/battles.entity.js";
-import { Player } from "./players.type.js";
+import { Player } from "./@types/players.type.js";
 
 @Entity("players")
 @Unique(["name"])

@@ -6,7 +6,7 @@ import {
 import {
 	GameMasterRole,
 	PlayerRole,
-} from "../guards/roles.enum.js";
+} from "../guards/@types/roles.enum.js";
 
 export const ROLES_KEY = "roles";
 
