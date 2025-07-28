@@ -256,7 +256,7 @@ Global throttling limits help mitigate brute-force attacks, spamming, or resourc
 
 ### 🐳 Docker Setup
 
-I added a full `Dockerfile` and `docker-compose.yml` to:
+I added a `docker-compose.yml` to:
 
 * Quickly bootstrap the project with PostgreSQL and Redis.
 * Simplify onboarding for reviewers or other developers.
