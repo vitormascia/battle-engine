@@ -1,11 +1,11 @@
 {
   "name": "battle-engine",
-  "version": "0.0.1",
-  "description": "",
+  "version": "1.0.0",
+  "description": "Battle engine made for a Scopely challenge",
   "author": "Vitor Mascia",
   "private": true,
   "type": "module",
-  "main": "./build/sandbox.js",
+  "main": "./build/main.js",
   "license": "UNLICENSED",
   "scripts": {
     "build": "npm run install-modules && npm run ts:compile && npm run lint:fix",
