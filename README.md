@@ -286,11 +286,11 @@ And because `CREATE INDEX CONCURRENTLY` isn’t allowed inside a transaction, th
 transaction = false;
 ```
 
-To support this kind of fine-grained control, I also configured TypeORM to run each migration in its own transaction by setting:
+To support this kind of fine-grained control, I also configured TypeORM to run each migration in it’s own transaction by setting:
 
 ```ts
 /*
- - Behavior: Each migration runs in its own transaction
+ - Behavior: Each migration runs in it’s own transaction
  - Pros: Migrations can override transaction = false safely (which is needed for
    the PLAYER_SCORE_DESC_INDEX)
  - Cons: Partial changes if one migration fails (earlier ones aren’t rolled back)
@@ -331,7 +331,7 @@ There’s always room for more polish. If time allowed, here’s what I would ha
 
 * **Request-Scoped Consumers**
 
-  [Request-scoped consumers](https://docs.nestjs.com/techniques/queues#request-scoped-consumers) along with [Provider scope](https://docs.nestjs.com/fundamentals/injection-scopes#provider-scope), are well-suited for a battle engine because each battle job can be treated as an isolated request with its own injected context (e.g., battle metadata, logging scope, DB session). This ensures clean separation of concurrent jobs and enables more granular observability. Also, a little bit of an overkill for a take-home project.
+  [Request-scoped consumers](https://docs.nestjs.com/techniques/queues#request-scoped-consumers) along with [Provider scope](https://docs.nestjs.com/fundamentals/injection-scopes#provider-scope), are well-suited for a battle engine because each battle job can be treated as an isolated request with it’s own injected context (e.g., battle metadata, logging scope, DB session). This ensures clean separation of concurrent jobs and enables more granular observability. Also, a little bit of an overkill for a take-home project.
 
 * **Tests (Jest)**
 
